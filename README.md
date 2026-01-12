@@ -4,12 +4,13 @@
 
 ### Parse proxy share links and manage sing-box instances with ease
 
-</div>
-
 [![Go Reference](https://pkg.go.dev/badge/github.com/lunardoesdev/singerbox.svg)](https://pkg.go.dev/github.com/lunardoesdev/singerbox)
 [![Go Report Card](https://goreportcard.com/badge/github.com/lunardoesdev/singerbox)](https://goreportcard.com/report/github.com/lunardoesdev/singerbox)
 [![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Coverage](https://img.shields.io/badge/coverage-91.8%25-brightgreen.svg)](.)
+
+</div>
+
 
 ```
 parser := singerbox.NewParser()

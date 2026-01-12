@@ -38,9 +38,6 @@ func TestNew(t *testing.T) {
 				if pb.ListenAddr() != "127.0.0.1:1080" {
 					t.Errorf("ListenAddr = %s, want 127.0.0.1:1080", pb.ListenAddr())
 				}
-				if pb.HTTPAddr() != "127.0.0.1:1081" {
-					t.Errorf("HTTPAddr = %s, want 127.0.0.1:1081", pb.HTTPAddr())
-				}
 			},
 		},
 		{
@@ -57,15 +54,11 @@ func TestNew(t *testing.T) {
 					},
 				},
 				ListenAddr: "127.0.0.1:9050",
-				HTTPPort:   9051,
 			},
 			wantErr: false,
 			check: func(t *testing.T, pb *singerbox.ProxyBox) {
 				if pb.ListenAddr() != "127.0.0.1:9050" {
 					t.Errorf("ListenAddr = %s, want 127.0.0.1:9050", pb.ListenAddr())
-				}
-				if pb.HTTPAddr() != "127.0.0.1:9051" {
-					t.Errorf("HTTPAddr = %s, want 127.0.0.1:9051", pb.HTTPAddr())
 				}
 			},
 		},
@@ -117,7 +110,6 @@ func TestProxyBox_StartStop(t *testing.T) {
 			Options: &option.DirectOutboundOptions{},
 		},
 		ListenAddr: "127.0.0.1:19080",
-		HTTPPort:   19081,
 		LogLevel:   "error", // Reduce log noise in tests
 	})
 	if err != nil {
@@ -209,7 +201,6 @@ func TestProxyBox_WithSharelink(t *testing.T) {
 			pb, err := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 				Outbound:   outbound,
 				ListenAddr: "127.0.0.1:19082",
-				HTTPPort:   19083,
 				LogLevel:   "error",
 			})
 
@@ -252,8 +243,8 @@ func TestProxyBox_Config(t *testing.T) {
 	if cfg.Log == nil {
 		t.Error("Config.Log is nil")
 	}
-	if len(cfg.Inbounds) != 2 {
-		t.Errorf("Expected 2 inbounds, got %d", len(cfg.Inbounds))
+	if len(cfg.Inbounds) != 1 {
+		t.Errorf("Expected 1 inbound (mixed), got %d", len(cfg.Inbounds))
 	}
 	if len(cfg.Outbounds) != 3 {
 		t.Errorf("Expected 3 outbounds (proxy, direct, block), got %d", len(cfg.Outbounds))
@@ -269,30 +260,22 @@ func TestProxyBox_Addresses(t *testing.T) {
 	tests := []struct {
 		name           string
 		listenAddr     string
-		httpPort       int
 		wantListenAddr string
-		wantHTTPAddr   string
 	}{
 		{
 			name:           "Default addresses",
 			listenAddr:     "",
-			httpPort:       0,
 			wantListenAddr: "127.0.0.1:1080",
-			wantHTTPAddr:   "127.0.0.1:1081",
 		},
 		{
 			name:           "Custom addresses",
 			listenAddr:     "127.0.0.1:9050",
-			httpPort:       9051,
 			wantListenAddr: "127.0.0.1:9050",
-			wantHTTPAddr:   "127.0.0.1:9051",
 		},
 		{
 			name:           "High port numbers",
 			listenAddr:     "127.0.0.1:19999",
-			httpPort:       20000,
 			wantListenAddr: "127.0.0.1:19999",
-			wantHTTPAddr:   "127.0.0.1:20000",
 		},
 	}
 
@@ -305,7 +288,6 @@ func TestProxyBox_Addresses(t *testing.T) {
 					Options: &option.DirectOutboundOptions{},
 				},
 				ListenAddr: tt.listenAddr,
-				HTTPPort:   tt.httpPort,
 			})
 			if err != nil {
 				t.Fatalf("New() error = %v", err)
@@ -313,9 +295,6 @@ func TestProxyBox_Addresses(t *testing.T) {
 
 			if pb.ListenAddr() != tt.wantListenAddr {
 				t.Errorf("ListenAddr() = %s, want %s", pb.ListenAddr(), tt.wantListenAddr)
-			}
-			if pb.HTTPAddr() != tt.wantHTTPAddr {
-				t.Errorf("HTTPAddr() = %s, want %s", pb.HTTPAddr(), tt.wantHTTPAddr)
 			}
 		})
 	}
@@ -330,7 +309,6 @@ func TestProxyBox_MultipleInstances(t *testing.T) {
 			Options: &option.DirectOutboundOptions{},
 		},
 		ListenAddr: "127.0.0.1:19100",
-		HTTPPort:   19101,
 		LogLevel:   "error",
 	})
 	if err != nil {
@@ -344,7 +322,6 @@ func TestProxyBox_MultipleInstances(t *testing.T) {
 			Options: &option.DirectOutboundOptions{},
 		},
 		ListenAddr: "127.0.0.1:19102",
-		HTTPPort:   19103,
 		LogLevel:   "error",
 	})
 	if err != nil {

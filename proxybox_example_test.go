@@ -33,16 +33,14 @@ func Example() {
 		return
 	}
 
-	// Get proxy addresses
-	fmt.Printf("SOCKS5: %s\n", pb.ListenAddr())
-	fmt.Printf("HTTP:   %s\n", pb.HTTPAddr())
+	// Get proxy address (supports both SOCKS5 and HTTP)
+	fmt.Printf("Mixed: %s\n", pb.ListenAddr())
 
 	// Stop the proxy
 	pb.Stop()
 
 	// Output:
-	// SOCKS5: 127.0.0.1:1080
-	// HTTP:   127.0.0.1:1081
+	// Mixed: 127.0.0.1:1080
 }
 
 // ExampleNewProxyBox demonstrates creating a new ProxyBox with custom configuration
@@ -56,7 +54,6 @@ func ExampleNewProxyBox() {
 	pb, err := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 		Outbound:   outbound,
 		ListenAddr: "127.0.0.1:9050",
-		HTTPPort:   9051,
 		LogLevel:   "error",
 	})
 	if err != nil {
@@ -64,14 +61,12 @@ func ExampleNewProxyBox() {
 		return
 	}
 
-	fmt.Printf("Created proxy box with custom ports\n")
-	fmt.Printf("SOCKS5 will listen on: %s\n", pb.ListenAddr())
-	fmt.Printf("HTTP will listen on: %s\n", pb.HTTPAddr())
+	fmt.Printf("Created proxy box with custom port\n")
+	fmt.Printf("Mixed proxy will listen on: %s\n", pb.ListenAddr())
 
 	// Output:
-	// Created proxy box with custom ports
-	// SOCKS5 will listen on: 127.0.0.1:9050
-	// HTTP will listen on: 127.0.0.1:9051
+	// Created proxy box with custom port
+	// Mixed proxy will listen on: 127.0.0.1:9050
 }
 
 // ExampleProxyBox_Start demonstrates starting a proxy
@@ -85,7 +80,6 @@ func ExampleProxyBox_Start() {
 	pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 		Outbound:   outbound,
 		ListenAddr: "127.0.0.1:19090",
-		HTTPPort:   19091,
 		LogLevel:   "error",
 	})
 
@@ -116,7 +110,6 @@ func ExampleProxyBox_Stop() {
 	pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 		Outbound:   outbound,
 		ListenAddr: "127.0.0.1:19092",
-		HTTPPort:   19093,
 		LogLevel:   "error",
 	})
 
@@ -147,7 +140,6 @@ func ExampleProxyBox_IsRunning() {
 	pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 		Outbound:   outbound,
 		ListenAddr: "127.0.0.1:19094",
-		HTTPPort:   19095,
 		LogLevel:   "error",
 	})
 
@@ -179,7 +171,6 @@ func ExampleProxyBox_withSharelink() {
 	pb, err := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 		Outbound:   outbound,
 		ListenAddr: "127.0.0.1:19096",
-		HTTPPort:   19097,
 		LogLevel:   "error",
 	})
 	if err != nil {
@@ -205,7 +196,6 @@ func ExampleNewProxyBox_multipleInstances() {
 			Options: &option.DirectOutboundOptions{},
 		},
 		ListenAddr: "127.0.0.1:19100",
-		HTTPPort:   19101,
 		LogLevel:   "error",
 	})
 
@@ -217,7 +207,6 @@ func ExampleNewProxyBox_multipleInstances() {
 			Options: &option.DirectOutboundOptions{},
 		},
 		ListenAddr: "127.0.0.1:19102",
-		HTTPPort:   19103,
 		LogLevel:   "error",
 	})
 
@@ -257,6 +246,6 @@ func ExampleProxyBox_Config() {
 
 	// Output:
 	// Log level: debug
-	// Number of inbounds: 2
+	// Number of inbounds: 1
 	// Number of outbounds: 3
 }

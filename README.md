@@ -41,7 +41,7 @@ Parse share links from any proxy protocol:
 
 ### 🚀 Manage Proxies Programmatically
 - Start/stop proxy instances with simple API
-- Both SOCKS5 and HTTP proxy modes
+- Mixed proxy mode supporting both SOCKS5 and HTTP on a single port
 - Run multiple proxy instances simultaneously
 - Full control over configuration
 
@@ -106,15 +106,13 @@ func main() {
     pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
         Outbound:   outbound,
         ListenAddr: "127.0.0.1:1080",
-        HTTPPort:   1081,
     })
 
     pb.Start()
     defer pb.Stop()
 
     fmt.Println("🚀 Proxy is running!")
-    fmt.Printf("   SOCKS5: %s\n", pb.ListenAddr())
-    fmt.Printf("   HTTP:   %s\n", pb.HTTPAddr())
+    fmt.Printf("   Mixed (SOCKS5/HTTP): %s\n", pb.ListenAddr())
     fmt.Println("\nPress Ctrl+C to stop...")
 
     // Wait for interrupt
@@ -188,15 +186,13 @@ trojan, _ := parser.Parse("trojan://pass2@server2:443")
 proxy1, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
     Outbound:   shadowsocks,
     ListenAddr: "127.0.0.1:1080",
-    HTTPPort:   1081,
 })
 proxy1.Start()
 
-// Start second proxy on different ports
+// Start second proxy on different port
 proxy2, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
     Outbound:   trojan,
     ListenAddr: "127.0.0.1:2080",
-    HTTPPort:   2081,
 })
 proxy2.Start()
 
@@ -250,7 +246,6 @@ if pb.IsRunning() {
 pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
     Outbound:   outbound,
     ListenAddr: "0.0.0.0:9050",    // Listen on all interfaces
-    HTTPPort:   9051,
     LogLevel:   "debug",           // Verbose logging
 })
 
@@ -259,8 +254,7 @@ defer pb.Stop()
 
 fmt.Println("✓ Proxy accessible from network!")
 fmt.Println("  Other devices can connect to:")
-fmt.Printf("  SOCKS5: YOUR_IP:9050\n")
-fmt.Printf("  HTTP:   YOUR_IP:9051\n")
+fmt.Printf("  Mixed (SOCKS5/HTTP): YOUR_IP:9050\n")
 ```
 
 ## 📚 API Documentation
@@ -299,8 +293,7 @@ Creates a new proxy instance.
 ```go
 type ProxyBoxConfig struct {
     Outbound   option.Outbound  // Required: sing-box outbound config
-    ListenAddr string           // Optional: SOCKS5 address (default: "127.0.0.1:1080")
-    HTTPPort   int              // Optional: HTTP port (default: 1081)
+    ListenAddr string           // Optional: Mixed proxy address (default: "127.0.0.1:1080")
     LogLevel   string           // Optional: "trace", "debug", "info", "warn", "error" (default: "info")
 }
 ```
@@ -311,8 +304,7 @@ type ProxyBoxConfig struct {
 Start() error              // Start the proxy
 Stop() error               // Stop the proxy
 IsRunning() bool           // Check if running
-ListenAddr() string        // Get SOCKS5 address
-HTTPAddr() string          // Get HTTP address
+ListenAddr() string        // Get mixed proxy address (supports both SOCKS5 and HTTP)
 Config() option.Options    // Get sing-box config
 Outbound() option.Outbound // Get outbound config
 ```
@@ -328,18 +320,17 @@ make build-minimal
 # Run with any share link
 ./proxy-tunnel -link 'vless://uuid@server:443?security=tls&type=ws'
 
-# Custom ports
-./proxy-tunnel -link 'ss://...' -listen 0.0.0.0:9050 -http-port 9051
+# Custom listen address
+./proxy-tunnel -link 'ss://...' -listen 0.0.0.0:9050
 ```
 
 **Usage:**
 ```
-./proxy-tunnel -link <share-link> [-listen <addr:port>] [-http-port <port>]
+./proxy-tunnel -link <share-link> [-listen <addr:port>]
 
 Options:
   -link        Proxy share link (required)
-  -listen      SOCKS5 listen address (default: 127.0.0.1:1080)
-  -http-port   HTTP proxy port (default: 1081)
+  -listen      Mixed proxy listen address (default: 127.0.0.1:1080)
 
 Examples:
   ./proxy-tunnel -link 'vless://uuid@server:443?type=ws&security=tls'

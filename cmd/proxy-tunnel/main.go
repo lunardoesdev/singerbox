@@ -12,15 +12,14 @@ import (
 
 var (
 	shareLink  = flag.String("link", "", "Share link (vless://, vmess://, ss://, etc.)")
-	listenAddr = flag.String("listen", "127.0.0.1:1080", "Local proxy listen address")
-	httpPort   = flag.Int("http-port", 1081, "HTTP proxy port")
+	listenAddr = flag.String("listen", "127.0.0.1:1080", "Mixed proxy listen address (SOCKS5 and HTTP)")
 )
 
 func main() {
 	flag.Parse()
 
 	if *shareLink == "" {
-		fmt.Println("Usage: proxy-tunnel -link <share-link> [-listen <addr:port>] [-http-port <port>]")
+		fmt.Println("Usage: proxy-tunnel -link <share-link> [-listen <addr:port>]")
 		fmt.Println("\nSupported protocols: vless, vmess, ss, trojan, http, socks")
 		fmt.Println("\nExample:")
 		fmt.Println("  proxy-tunnel -link 'vless://uuid@server:443?type=ws&security=tls'")
@@ -39,7 +38,6 @@ func main() {
 	pb, err := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 		Outbound:   outbound,
 		ListenAddr: *listenAddr,
-		HTTPPort:   *httpPort,
 		LogLevel:   "info",
 	})
 	if err != nil {
@@ -55,8 +53,7 @@ func main() {
 	}
 
 	fmt.Printf("✓ Proxy started successfully!\n")
-	fmt.Printf("  SOCKS5: %s\n", pb.ListenAddr())
-	fmt.Printf("  HTTP:   %s\n", pb.HTTPAddr())
+	fmt.Printf("  Mixed (SOCKS5/HTTP): %s\n", pb.ListenAddr())
 	fmt.Printf("  Routing through: %s\n", outbound.Tag)
 	fmt.Println("\nPress Ctrl+C to stop...")
 

@@ -28,11 +28,8 @@ type ProxyBoxConfig struct {
 	// Outbound is the sing-box outbound configuration
 	Outbound option.Outbound
 
-	// ListenAddr is the address for SOCKS5/mixed proxy (default: "127.0.0.1:1080")
+	// ListenAddr is the address for SOCKS5/HTTP mixed proxy (default: "127.0.0.1:1080")
 	ListenAddr string
-
-	// HTTPPort is the port for HTTP proxy (default: 1081)
-	HTTPPort int
 
 	// LogLevel is the log level (default: "info")
 	LogLevel string
@@ -43,9 +40,6 @@ func NewProxyBox(cfg ProxyBoxConfig) (*ProxyBox, error) {
 	// Set defaults
 	if cfg.ListenAddr == "" {
 		cfg.ListenAddr = "127.0.0.1:1080"
-	}
-	if cfg.HTTPPort == 0 {
-		cfg.HTTPPort = 1081
 	}
 	if cfg.LogLevel == "" {
 		cfg.LogLevel = "info"
@@ -125,7 +119,7 @@ func (pb *ProxyBox) Outbound() option.Outbound {
 	return pb.outbound
 }
 
-// ListenAddr returns the SOCKS5/mixed listen address
+// ListenAddr returns the mixed proxy listen address (supports both SOCKS5 and HTTP)
 func (pb *ProxyBox) ListenAddr() string {
 	for _, inbound := range pb.config.Inbounds {
 		if inbound.Type == "mixed" {
@@ -142,29 +136,10 @@ func (pb *ProxyBox) ListenAddr() string {
 	return ""
 }
 
-// HTTPAddr returns the HTTP proxy address
-func (pb *ProxyBox) HTTPAddr() string {
-	for _, inbound := range pb.config.Inbounds {
-		if inbound.Type == "http" {
-			if opts, ok := inbound.Options.(*option.HTTPMixedInboundOptions); ok {
-				host := "127.0.0.1"
-				if opts.Listen != nil {
-					addr := netip.Addr(*opts.Listen)
-					host = addr.String()
-				}
-				return fmt.Sprintf("%s:%d", host, opts.ListenPort)
-			}
-		}
-	}
-	return ""
-}
-
 // createConfig creates a sing-box configuration from the given config
 func createConfig(cfg ProxyBoxConfig) (option.Options, error) {
-	// Split address for HTTP proxy
-	host := strings.Split(cfg.ListenAddr, ":")[0]
-
 	// Parse listen address
+	host := strings.Split(cfg.ListenAddr, ":")[0]
 	listenIP, err := netip.ParseAddr(host)
 	if err != nil {
 		listenIP = netip.MustParseAddr("127.0.0.1")
@@ -184,16 +159,6 @@ func createConfig(cfg ProxyBoxConfig) (option.Options, error) {
 					ListenOptions: option.ListenOptions{
 						Listen:     listenAddr,
 						ListenPort: uint16(getPortOrDefault(1080, cfg.ListenAddr)),
-					},
-				},
-			},
-			{
-				Type: "http",
-				Tag:  "http-in",
-				Options: &option.HTTPMixedInboundOptions{
-					ListenOptions: option.ListenOptions{
-						Listen:     listenAddr,
-						ListenPort: uint16(cfg.HTTPPort),
 					},
 				},
 			},

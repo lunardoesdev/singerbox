@@ -9,19 +9,19 @@ all: build
 # Build with all features enabled
 build:
 	@echo "Building proxy-tunnel with all features..."
-	go build -tags "$(TAGS)" -o proxy-tunnel
+	go build -tags "$(TAGS)" -o proxy-tunnel ./cmd/proxy-tunnel/
 	@echo "✓ Build complete: proxy-tunnel (with uTLS, QUIC, WireGuard, DHCP, Clash API)"
 
 # Build minimal version (only uTLS for Reality support)
 build-minimal:
 	@echo "Building minimal proxy-tunnel..."
-	go build -tags "with_utls" -o proxy-tunnel
+	go build -tags "with_utls" -o proxy-tunnel ./cmd/proxy-tunnel/
 	@echo "✓ Build complete: proxy-tunnel (minimal with uTLS)"
 
 # Build without any optional features (smallest binary)
 build-basic:
 	@echo "Building basic proxy-tunnel..."
-	go build -o proxy-tunnel
+	go build -o proxy-tunnel ./cmd/proxy-tunnel/
 	@echo "✓ Build complete: proxy-tunnel (basic)"
 
 # Get dependencies
@@ -36,16 +36,28 @@ clean:
 	rm -f proxy-tunnel
 	@echo "✓ Clean complete"
 
-# Run tests
+# Run Go tests
 test:
+	@echo "Running Go tests..."
+	go test -v
+	@echo "✓ All tests passed"
+
+# Run tests with coverage
+test-cover:
+	@echo "Running tests with coverage..."
+	go test -cover
+	@echo "✓ Tests complete"
+
+# Run integration test (binary)
+test-binary: build-minimal
 	@echo "Testing proxy startup..."
 	@timeout 5 ./proxy-tunnel -link 'http://example.com:8080' > /tmp/proxy-test.log 2>&1 & \
 	sleep 2; \
 	if grep -q "sing-box started" /tmp/proxy-test.log; then \
-		echo "✓ Test passed"; \
+		echo "✓ Binary test passed"; \
 		pkill -f proxy-tunnel; \
 	else \
-		echo "✗ Test failed"; \
+		echo "✗ Binary test failed"; \
 		cat /tmp/proxy-test.log; \
 		exit 1; \
 	fi
@@ -73,8 +85,10 @@ info:
 	@echo "  make build-basic   - Build basic version"
 	@echo "  make deps          - Download dependencies"
 	@echo "  make clean         - Remove build artifacts"
-	@echo "  make test          - Test the build"
+	@echo "  make test          - Run Go tests"
+	@echo "  make test-cover    - Run tests with coverage"
+	@echo "  make test-binary   - Test the compiled binary"
 	@echo "  make install       - Install to /usr/local/bin"
 	@echo "  make uninstall     - Remove from /usr/local/bin"
 
-.PHONY: all build build-minimal build-basic deps clean test install uninstall info
+.PHONY: all build build-minimal build-basic deps clean test test-cover test-binary install uninstall info

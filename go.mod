@@ -1,4 +1,4 @@
-module proxy-tunnel
+module github.com/lunardoesdev/singerbox
 
 go 1.25.5
 

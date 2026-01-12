@@ -1,10 +1,11 @@
-package sharelink
+package singerbox_test
 
 import (
 	"encoding/base64"
 	"encoding/json"
 	"testing"
 
+	"github.com/lunardoesdev/singerbox"
 	"github.com/sagernet/sing-box/option"
 )
 
@@ -105,7 +106,7 @@ func TestParseVLESS(t *testing.T) {
 		},
 	}
 
-	parser := New()
+	parser := singerbox.NewParser()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := parser.ParseVLESS(tt.link)
@@ -122,7 +123,7 @@ func TestParseVLESS(t *testing.T) {
 
 func TestParseVMess(t *testing.T) {
 	// Create a VMess configuration
-	vmessConfig := VMessConfig{
+	vmessConfig := singerbox.VMessConfig{
 		V:    "2",
 		Ps:   "TestVMess",
 		Add:  "vmess.example.com",
@@ -187,7 +188,7 @@ func TestParseVMess(t *testing.T) {
 		},
 	}
 
-	parser := New()
+	parser := singerbox.NewParser()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := parser.ParseVMess(tt.link)
@@ -262,7 +263,7 @@ func TestParseShadowsocks(t *testing.T) {
 		},
 	}
 
-	parser := New()
+	parser := singerbox.NewParser()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := parser.ParseShadowsocks(tt.link)
@@ -334,7 +335,7 @@ func TestParseTrojan(t *testing.T) {
 		},
 	}
 
-	parser := New()
+	parser := singerbox.NewParser()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := parser.ParseTrojan(tt.link)
@@ -406,7 +407,7 @@ func TestParseSOCKS(t *testing.T) {
 		},
 	}
 
-	parser := New()
+	parser := singerbox.NewParser()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := parser.ParseSOCKS(tt.link)
@@ -484,7 +485,7 @@ func TestParseHTTP(t *testing.T) {
 		},
 	}
 
-	parser := New()
+	parser := singerbox.NewParser()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := parser.ParseHTTP(tt.link)
@@ -550,7 +551,7 @@ func TestParse(t *testing.T) {
 		},
 	}
 
-	parser := New()
+	parser := singerbox.NewParser()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := parser.Parse(tt.link)
@@ -567,7 +568,7 @@ func TestParse(t *testing.T) {
 
 // Benchmark tests
 func BenchmarkParseVLESS(b *testing.B) {
-	parser := New()
+	parser := singerbox.NewParser()
 	link := "vless://uuid@server:443?type=ws&security=tls&path=/ws"
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -576,7 +577,7 @@ func BenchmarkParseVLESS(b *testing.B) {
 }
 
 func BenchmarkParseVMess(b *testing.B) {
-	parser := New()
+	parser := singerbox.NewParser()
 	config := `{"v":"2","ps":"test","add":"server","port":"443","id":"uuid","aid":"0","net":"ws","type":"none","host":"server","path":"/","tls":"tls"}`
 	link := "vmess://" + base64.StdEncoding.EncodeToString([]byte(config))
 	b.ResetTimer()
@@ -586,7 +587,7 @@ func BenchmarkParseVMess(b *testing.B) {
 }
 
 func BenchmarkParseShadowsocks(b *testing.B) {
-	parser := New()
+	parser := singerbox.NewParser()
 	link := "ss://aes-256-gcm:password@server:8388"
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

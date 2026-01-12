@@ -1,10 +1,11 @@
-package sharelink
+package singerbox_test
 
 import (
 	"encoding/base64"
 	"encoding/json"
 	"testing"
 
+	"github.com/lunardoesdev/singerbox"
 	"github.com/sagernet/sing-box/option"
 )
 
@@ -132,7 +133,7 @@ func TestParseVLESS_ExtendedConfigurations(t *testing.T) {
 		},
 	}
 
-	parser := New()
+	parser := singerbox.NewParser()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := parser.ParseVLESS(tt.link)
@@ -151,13 +152,13 @@ func TestParseVLESS_ExtendedConfigurations(t *testing.T) {
 func TestParseVMess_ExtendedConfigurations(t *testing.T) {
 	tests := []struct {
 		name    string
-		config  VMessConfig
+		config  singerbox.VMessConfig
 		wantErr bool
 		check   func(*testing.T, option.Outbound)
 	}{
 		{
 			name: "VMess with gRPC transport",
-			config: VMessConfig{
+			config: singerbox.VMessConfig{
 				V:    "2",
 				Ps:   "gRPC Server",
 				Add:  "grpc.example.com",
@@ -185,7 +186,7 @@ func TestParseVMess_ExtendedConfigurations(t *testing.T) {
 		},
 		{
 			name: "VMess with HTTP/2",
-			config: VMessConfig{
+			config: singerbox.VMessConfig{
 				V:    "2",
 				Ps:   "H2 Server",
 				Add:  "h2.example.com",
@@ -210,7 +211,7 @@ func TestParseVMess_ExtendedConfigurations(t *testing.T) {
 		},
 		{
 			name: "VMess without TLS",
-			config: VMessConfig{
+			config: singerbox.VMessConfig{
 				V:    "2",
 				Ps:   "No TLS",
 				Add:  "plain.example.com",
@@ -232,7 +233,7 @@ func TestParseVMess_ExtendedConfigurations(t *testing.T) {
 		},
 		{
 			name: "VMess with custom port 8443",
-			config: VMessConfig{
+			config: singerbox.VMessConfig{
 				V:    "2",
 				Ps:   "Custom Port",
 				Add:  "server.com",
@@ -256,7 +257,7 @@ func TestParseVMess_ExtendedConfigurations(t *testing.T) {
 		},
 		{
 			name: "VMess with ALPN",
-			config: VMessConfig{
+			config: singerbox.VMessConfig{
 				V:    "2",
 				Ps:   "ALPN Server",
 				Add:  "alpn.example.com",
@@ -280,7 +281,7 @@ func TestParseVMess_ExtendedConfigurations(t *testing.T) {
 		},
 	}
 
-	parser := New()
+	parser := singerbox.NewParser()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			configJSON, _ := json.Marshal(tt.config)
@@ -390,7 +391,7 @@ func TestParseShadowsocks_ExtendedConfigurations(t *testing.T) {
 		},
 	}
 
-	parser := New()
+	parser := singerbox.NewParser()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := parser.ParseShadowsocks(tt.link)
@@ -478,7 +479,7 @@ func TestParseTrojan_ExtendedConfigurations(t *testing.T) {
 		},
 	}
 
-	parser := New()
+	parser := singerbox.NewParser()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := parser.ParseTrojan(tt.link)
@@ -560,7 +561,7 @@ func TestParseSOCKS_ExtendedConfigurations(t *testing.T) {
 		},
 	}
 
-	parser := New()
+	parser := singerbox.NewParser()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := parser.ParseSOCKS(tt.link)
@@ -644,7 +645,7 @@ func TestParseHTTP_ExtendedConfigurations(t *testing.T) {
 		},
 	}
 
-	parser := New()
+	parser := singerbox.NewParser()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := parser.ParseHTTP(tt.link)
@@ -676,7 +677,7 @@ func TestParseRealWorldExamples(t *testing.T) {
 		{
 			name: "VMess with Cloudflare",
 			link: func() string {
-				config := VMessConfig{
+				config := singerbox.VMessConfig{
 					V: "2", Ps: "CF-Server", Add: "cf.example.com", Port: "443",
 					ID: "uuid", Aid: "0", Net: "ws", Path: "/cfws", TLS: "tls", Host: "cf.example.com",
 				}
@@ -706,7 +707,7 @@ func TestParseRealWorldExamples(t *testing.T) {
 		},
 	}
 
-	parser := New()
+	parser := singerbox.NewParser()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := parser.Parse(tt.link)

@@ -1,4 +1,4 @@
-package proxybox
+package singerbox
 
 import (
 	"context"
@@ -24,7 +24,7 @@ type ProxyBox struct {
 }
 
 // Config holds configuration for creating a ProxyBox
-type Config struct {
+type ProxyBoxConfig struct {
 	// Outbound is the sing-box outbound configuration
 	Outbound option.Outbound
 
@@ -39,7 +39,7 @@ type Config struct {
 }
 
 // New creates a new ProxyBox with the given configuration
-func New(cfg Config) (*ProxyBox, error) {
+func NewProxyBox(cfg ProxyBoxConfig) (*ProxyBox, error) {
 	// Set defaults
 	if cfg.ListenAddr == "" {
 		cfg.ListenAddr = "127.0.0.1:1080"
@@ -160,7 +160,7 @@ func (pb *ProxyBox) HTTPAddr() string {
 }
 
 // createConfig creates a sing-box configuration from the given config
-func createConfig(cfg Config) (option.Options, error) {
+func createConfig(cfg ProxyBoxConfig) (option.Options, error) {
 	// Split address for HTTP proxy
 	host := strings.Split(cfg.ListenAddr, ":")[0]
 
@@ -183,7 +183,7 @@ func createConfig(cfg Config) (option.Options, error) {
 				Options: &option.HTTPMixedInboundOptions{
 					ListenOptions: option.ListenOptions{
 						Listen:     listenAddr,
-						ListenPort: uint16(getPort(cfg.ListenAddr)),
+						ListenPort: uint16(getPortOrDefault(1080, cfg.ListenAddr)),
 					},
 				},
 			},
@@ -231,7 +231,7 @@ func createConfig(cfg Config) (option.Options, error) {
 }
 
 // getPort extracts port from host:port string
-func getPort(hostPort string) int {
+func getPortOrDefault(defaultPort int, hostPort string) int {
 	parts := strings.Split(hostPort, ":")
 	if len(parts) < 2 {
 		return 1080 // Default SOCKS port

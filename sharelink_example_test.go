@@ -1,16 +1,16 @@
-package sharelink_test
+package singerbox_test
 
 import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 
-	"proxy-tunnel/pkg/sharelink"
+	"github.com/lunardoesdev/singerbox"
 )
 
 // Example demonstrates basic usage of the sharelink parser
-func Example() {
-	parser := sharelink.New()
+func ExampleParser() {
+	parser := singerbox.NewParser()
 
 	// Parse a VLESS link
 	link := "vless://uuid@example.com:443?type=ws&security=tls&path=/ws#MyProxy"
@@ -29,7 +29,7 @@ func Example() {
 
 // ExampleParser_ParseVLESS demonstrates VLESS parsing
 func ExampleParser_ParseVLESS() {
-	parser := sharelink.New()
+	parser := singerbox.NewParser()
 
 	link := "vless://a1b2c3d4-e5f6-7890-abcd-ef1234567890@server.example.com:443?type=ws&security=tls&path=/vless&sni=server.example.com#TestServer"
 	outbound, err := parser.ParseVLESS(link)
@@ -47,7 +47,7 @@ func ExampleParser_ParseVLESS() {
 
 // ExampleParser_ParseVLESS_reality demonstrates VLESS with Reality
 func ExampleParser_ParseVLESS_reality() {
-	parser := sharelink.New()
+	parser := singerbox.NewParser()
 
 	link := "vless://uuid@server:443?security=reality&pbk=publicKey&sid=shortID&sni=www.example.com&fp=chrome"
 	outbound, err := parser.ParseVLESS(link)
@@ -67,10 +67,10 @@ func ExampleParser_ParseVLESS_reality() {
 
 // ExampleParser_ParseVMess demonstrates VMess parsing
 func ExampleParser_ParseVMess() {
-	parser := sharelink.New()
+	parser := singerbox.NewParser()
 
 	// Create VMess config
-	config := sharelink.VMessConfig{
+	config := singerbox.VMessConfig{
 		V:    "2",
 		Ps:   "TestServer",
 		Add:  "vmess.example.com",
@@ -101,7 +101,7 @@ func ExampleParser_ParseVMess() {
 
 // ExampleParser_ParseShadowsocks demonstrates Shadowsocks parsing
 func ExampleParser_ParseShadowsocks() {
-	parser := sharelink.New()
+	parser := singerbox.NewParser()
 
 	link := "ss://aes-256-gcm:mypassword@ss.example.com:8388#MySSProxy"
 	outbound, err := parser.ParseShadowsocks(link)
@@ -119,7 +119,7 @@ func ExampleParser_ParseShadowsocks() {
 
 // ExampleParser_ParseTrojan demonstrates Trojan parsing
 func ExampleParser_ParseTrojan() {
-	parser := sharelink.New()
+	parser := singerbox.NewParser()
 
 	link := "trojan://mypassword@trojan.example.com:443?sni=trojan.example.com#TrojanProxy"
 	outbound, err := parser.ParseTrojan(link)
@@ -137,7 +137,7 @@ func ExampleParser_ParseTrojan() {
 
 // ExampleParser_ParseSOCKS demonstrates SOCKS5 parsing
 func ExampleParser_ParseSOCKS() {
-	parser := sharelink.New()
+	parser := singerbox.NewParser()
 
 	link := "socks5://user:pass@proxy.example.com:1080"
 	outbound, err := parser.ParseSOCKS(link)
@@ -153,7 +153,7 @@ func ExampleParser_ParseSOCKS() {
 
 // ExampleParser_ParseHTTP demonstrates HTTP proxy parsing
 func ExampleParser_ParseHTTP() {
-	parser := sharelink.New()
+	parser := singerbox.NewParser()
 
 	link := "https://user:pass@secure.proxy.com:8080"
 	outbound, err := parser.ParseHTTP(link)
@@ -171,7 +171,7 @@ func ExampleParser_ParseHTTP() {
 
 // ExampleParser_Parse_autoDetect demonstrates auto-detection
 func ExampleParser_Parse_autoDetect() {
-	parser := sharelink.New()
+	parser := singerbox.NewParser()
 
 	links := []string{
 		"vless://uuid@server:443",

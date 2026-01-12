@@ -1,5 +1,5 @@
 // Package sharelink provides functionality to parse proxy share links into sing-box outbound configurations.
-package sharelink
+package singerbox
 
 import (
 	"encoding/base64"
@@ -17,7 +17,7 @@ import (
 type Parser struct{}
 
 // New creates a new Parser instance
-func New() *Parser {
+func NewParser() *Parser {
 	return &Parser{}
 }
 

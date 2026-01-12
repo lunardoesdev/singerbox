@@ -1,11 +1,10 @@
-package proxybox_test
+package singerbox_test
 
 import (
 	"testing"
 	"time"
 
-	"proxy-tunnel/pkg/proxybox"
-	"proxy-tunnel/pkg/sharelink"
+	"github.com/lunardoesdev/singerbox"
 
 	"github.com/sagernet/sing-box/option"
 )
@@ -13,13 +12,13 @@ import (
 func TestNew(t *testing.T) {
 	tests := []struct {
 		name    string
-		config  proxybox.Config
+		config  singerbox.ProxyBoxConfig
 		wantErr bool
-		check   func(*testing.T, *proxybox.ProxyBox)
+		check   func(*testing.T, *singerbox.ProxyBox)
 	}{
 		{
 			name: "Valid SOCKS outbound with defaults",
-			config: proxybox.Config{
+			config: singerbox.ProxyBoxConfig{
 				Outbound: option.Outbound{
 					Type: "socks",
 					Tag:  "test-socks",
@@ -32,7 +31,7 @@ func TestNew(t *testing.T) {
 				},
 			},
 			wantErr: false,
-			check: func(t *testing.T, pb *proxybox.ProxyBox) {
+			check: func(t *testing.T, pb *singerbox.ProxyBox) {
 				if pb == nil {
 					t.Fatal("ProxyBox is nil")
 				}
@@ -46,7 +45,7 @@ func TestNew(t *testing.T) {
 		},
 		{
 			name: "Custom listen address and port",
-			config: proxybox.Config{
+			config: singerbox.ProxyBoxConfig{
 				Outbound: option.Outbound{
 					Type: "socks",
 					Tag:  "test-socks",
@@ -61,7 +60,7 @@ func TestNew(t *testing.T) {
 				HTTPPort:   9051,
 			},
 			wantErr: false,
-			check: func(t *testing.T, pb *proxybox.ProxyBox) {
+			check: func(t *testing.T, pb *singerbox.ProxyBox) {
 				if pb.ListenAddr() != "127.0.0.1:9050" {
 					t.Errorf("ListenAddr = %s, want 127.0.0.1:9050", pb.ListenAddr())
 				}
@@ -72,7 +71,7 @@ func TestNew(t *testing.T) {
 		},
 		{
 			name: "Custom log level",
-			config: proxybox.Config{
+			config: singerbox.ProxyBoxConfig{
 				Outbound: option.Outbound{
 					Type: "socks",
 					Tag:  "test-socks",
@@ -86,7 +85,7 @@ func TestNew(t *testing.T) {
 				LogLevel: "debug",
 			},
 			wantErr: false,
-			check: func(t *testing.T, pb *proxybox.ProxyBox) {
+			check: func(t *testing.T, pb *singerbox.ProxyBox) {
 				cfg := pb.Config()
 				if cfg.Log.Level != "debug" {
 					t.Errorf("LogLevel = %s, want debug", cfg.Log.Level)
@@ -97,7 +96,7 @@ func TestNew(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			pb, err := proxybox.New(tt.config)
+			pb, err := singerbox.NewProxyBox(tt.config)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("New() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -111,7 +110,7 @@ func TestNew(t *testing.T) {
 
 func TestProxyBox_StartStop(t *testing.T) {
 	// Create a simple SOCKS outbound for testing
-	pb, err := proxybox.New(proxybox.Config{
+	pb, err := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 		Outbound: option.Outbound{
 			Type: "direct",
 			Tag:  "direct",
@@ -168,7 +167,7 @@ func TestProxyBox_StartStop(t *testing.T) {
 
 func TestProxyBox_WithSharelink(t *testing.T) {
 	// Test integration with sharelink parser
-	parser := sharelink.New()
+	parser := singerbox.NewParser()
 
 	tests := []struct {
 		name       string
@@ -207,7 +206,7 @@ func TestProxyBox_WithSharelink(t *testing.T) {
 				t.Fatalf("Failed to parse link: %v", err)
 			}
 
-			pb, err := proxybox.New(proxybox.Config{
+			pb, err := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 				Outbound:   outbound,
 				ListenAddr: "127.0.0.1:19082",
 				HTTPPort:   19083,
@@ -241,7 +240,7 @@ func TestProxyBox_Config(t *testing.T) {
 		Options: &option.DirectOutboundOptions{},
 	}
 
-	pb, err := proxybox.New(proxybox.Config{
+	pb, err := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 		Outbound: outbound,
 	})
 	if err != nil {
@@ -299,7 +298,7 @@ func TestProxyBox_Addresses(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			pb, err := proxybox.New(proxybox.Config{
+			pb, err := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 				Outbound: option.Outbound{
 					Type:    "direct",
 					Tag:     "direct",
@@ -324,7 +323,7 @@ func TestProxyBox_Addresses(t *testing.T) {
 
 func TestProxyBox_MultipleInstances(t *testing.T) {
 	// Test that multiple instances can coexist with different ports
-	pb1, err := proxybox.New(proxybox.Config{
+	pb1, err := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 		Outbound: option.Outbound{
 			Type:    "direct",
 			Tag:     "direct1",
@@ -338,7 +337,7 @@ func TestProxyBox_MultipleInstances(t *testing.T) {
 		t.Fatalf("New(pb1) error = %v", err)
 	}
 
-	pb2, err := proxybox.New(proxybox.Config{
+	pb2, err := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 		Outbound: option.Outbound{
 			Type:    "direct",
 			Tag:     "direct2",

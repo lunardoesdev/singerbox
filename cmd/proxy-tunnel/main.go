@@ -7,8 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"proxy-tunnel/pkg/proxybox"
-	"proxy-tunnel/pkg/sharelink"
+	"github.com/lunardoesdev/singerbox"
 )
 
 var (
@@ -29,7 +28,7 @@ func main() {
 	}
 
 	// Parse share link using the library
-	parser := sharelink.New()
+	parser := singerbox.NewParser()
 	outbound, err := parser.Parse(*shareLink)
 	if err != nil {
 		fmt.Printf("Error parsing share link: %v\n", err)
@@ -37,7 +36,7 @@ func main() {
 	}
 
 	// Create proxy box
-	pb, err := proxybox.New(proxybox.Config{
+	pb, err := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 		Outbound:   outbound,
 		ListenAddr: *listenAddr,
 		HTTPPort:   *httpPort,

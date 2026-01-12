@@ -1,11 +1,10 @@
-package proxybox_test
+package singerbox_test
 
 import (
 	"fmt"
 	"time"
 
-	"proxy-tunnel/pkg/proxybox"
-	"proxy-tunnel/pkg/sharelink"
+	"github.com/lunardoesdev/singerbox"
 
 	"github.com/sagernet/sing-box/option"
 )
@@ -20,7 +19,7 @@ func Example() {
 	}
 
 	// Create proxy box with default settings
-	pb, err := proxybox.New(proxybox.Config{
+	pb, err := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 		Outbound: outbound,
 	})
 	if err != nil {
@@ -46,15 +45,15 @@ func Example() {
 	// HTTP:   127.0.0.1:1081
 }
 
-// ExampleNew demonstrates creating a new ProxyBox with custom configuration
-func ExampleNew() {
+// ExampleNewProxyBox demonstrates creating a new ProxyBox with custom configuration
+func ExampleNewProxyBox() {
 	outbound := option.Outbound{
 		Type:    "direct",
 		Tag:     "my-proxy",
 		Options: &option.DirectOutboundOptions{},
 	}
 
-	pb, err := proxybox.New(proxybox.Config{
+	pb, err := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 		Outbound:   outbound,
 		ListenAddr: "127.0.0.1:9050",
 		HTTPPort:   9051,
@@ -83,7 +82,7 @@ func ExampleProxyBox_Start() {
 		Options: &option.DirectOutboundOptions{},
 	}
 
-	pb, _ := proxybox.New(proxybox.Config{
+	pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 		Outbound:   outbound,
 		ListenAddr: "127.0.0.1:19090",
 		HTTPPort:   19091,
@@ -114,7 +113,7 @@ func ExampleProxyBox_Stop() {
 		Options: &option.DirectOutboundOptions{},
 	}
 
-	pb, _ := proxybox.New(proxybox.Config{
+	pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 		Outbound:   outbound,
 		ListenAddr: "127.0.0.1:19092",
 		HTTPPort:   19093,
@@ -145,7 +144,7 @@ func ExampleProxyBox_IsRunning() {
 		Options: &option.DirectOutboundOptions{},
 	}
 
-	pb, _ := proxybox.New(proxybox.Config{
+	pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 		Outbound:   outbound,
 		ListenAddr: "127.0.0.1:19094",
 		HTTPPort:   19095,
@@ -169,7 +168,7 @@ func ExampleProxyBox_IsRunning() {
 // ExampleProxyBox_withSharelink demonstrates integration with sharelink parser
 func ExampleProxyBox_withSharelink() {
 	// Parse a share link
-	parser := sharelink.New()
+	parser := singerbox.NewParser()
 	outbound, err := parser.Parse("socks5://127.0.0.1:1080")
 	if err != nil {
 		fmt.Printf("Parse error: %v\n", err)
@@ -177,7 +176,7 @@ func ExampleProxyBox_withSharelink() {
 	}
 
 	// Create proxy box with the parsed outbound
-	pb, err := proxybox.New(proxybox.Config{
+	pb, err := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 		Outbound:   outbound,
 		ListenAddr: "127.0.0.1:19096",
 		HTTPPort:   19097,
@@ -196,10 +195,10 @@ func ExampleProxyBox_withSharelink() {
 	// Tag: proxy
 }
 
-// ExampleNew_multipleInstances demonstrates running multiple proxies
-func ExampleNew_multipleInstances() {
+// ExampleNewProxyBox_multipleInstances demonstrates running multiple proxies
+func ExampleNewProxyBox_multipleInstances() {
 	// Create first proxy
-	pb1, _ := proxybox.New(proxybox.Config{
+	pb1, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 		Outbound: option.Outbound{
 			Type:    "direct",
 			Tag:     "proxy1",
@@ -211,7 +210,7 @@ func ExampleNew_multipleInstances() {
 	})
 
 	// Create second proxy
-	pb2, _ := proxybox.New(proxybox.Config{
+	pb2, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 		Outbound: option.Outbound{
 			Type:    "direct",
 			Tag:     "proxy2",
@@ -246,7 +245,7 @@ func ExampleProxyBox_Config() {
 		Options: &option.DirectOutboundOptions{},
 	}
 
-	pb, _ := proxybox.New(proxybox.Config{
+	pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 		Outbound: outbound,
 		LogLevel: "debug",
 	})

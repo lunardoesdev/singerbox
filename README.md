@@ -1,263 +1,275 @@
-# Proxy Tunnel
+# SingerBox
 
-A Go application that uses **sing-box as a library** to create a local HTTP/SOCKS proxy that tunnels traffic through various proxy protocols.
+A Go library for parsing proxy share links and managing sing-box proxy instances programmatically.
+
+[![Go Reference](https://pkg.go.dev/badge/github.com/lunardoesdev/singerbox.svg)](https://pkg.go.dev/github.com/lunardoesdev/singerbox)
 
 ## Features
 
-- ✅ **Uses sing-box as a library** (not separate process)
-- ✅ **Reusable sharelink parser library** (`pkg/sharelink`) with comprehensive tests
-- ✅ **Multiple proxy protocols**:
-  - VLESS (with TLS, Reality, WebSocket, gRPC, HTTP/2 transports)
-  - VMess (with TLS, WebSocket, gRPC, HTTP/2 transports)
-  - Shadowsocks
-  - Trojan (with TLS and transports)
-  - SOCKS5
-  - HTTP/HTTPS
-- ✅ **Local mixed proxy** (HTTP + SOCKS5)
-- ✅ **Simple command-line interface**
-- ✅ **Well-tested** with comprehensive test suite
+- ✅ **Parse share links** - VLESS, VMess, Shadowsocks, Trojan, SOCKS5, HTTP/HTTPS
+- ✅ **Manage sing-box** - Start/stop proxy instances programmatically
+- ✅ **Dual proxy modes** - SOCKS5 and HTTP proxy support
+- ✅ **Reality protocol** - Full support with uTLS fingerprinting
+- ✅ **Well-tested** - 91.8% test coverage
+- ✅ **Clean API** - Simple, documented, easy to use
 
-## Building
-
-### Quick Build (Recommended)
+## Installation
 
 ```bash
-# Using Makefile (includes all features)
-make
-
-# Or manually with all features
-go build -tags "with_quic,with_utls,with_wireguard,with_dhcp,with_clash_api" -o proxy-tunnel
+go get github.com/lunardoesdev/singerbox
 ```
 
-### Build Options
+## Quick Start
 
-```bash
-# Full-featured build (recommended) - ~37MB
-make build
+### Parse Share Links
 
-# Minimal build (uTLS only for Reality support) - ~32MB
-make build-minimal
-
-# Basic build (no optional features) - ~32MB
-make build-basic
-
-# Get dependencies first
-make deps
-```
-
-**Important**: The `with_utls` tag is required for Reality protocol support. Without it, you'll get an error when using Reality-enabled proxies.
-
-### Build Tags Explained
-
-- `with_utls` - **Required for Reality protocol** and advanced TLS features
-- `with_quic` - Enables QUIC transport (Hysteria, Hysteria2)
-- `with_wireguard` - Enables WireGuard protocol
-- `with_dhcp` - Enables DHCP DNS server
-- `with_clash_api` - Enables Clash API compatibility
-
-**Note**: The first build will download all necessary dependencies.
-
-## Usage
-
-```bash
-./proxy-tunnel -link <share-link> [-listen <addr:port>] [-http-port <port>]
-```
-
-### Parameters
-
-- `-link`: Proxy share link (required)
-  - Supported formats: `vless://`, `vmess://`, `ss://`, `trojan://`, `socks5://`, `http://`, `https://`
-- `-listen`: Local SOCKS5 proxy address (default: `127.0.0.1:1080`)
-- `-http-port`: Local HTTP proxy port (default: `1081`)
-
-### Examples
-
-#### VLESS with TLS and WebSocket
-```bash
-./proxy-tunnel -link 'vless://uuid@example.com:443?type=ws&security=tls&path=/ws'
-```
-
-#### VLESS with Reality
-```bash
-./proxy-tunnel -link 'vless://uuid@example.com:443?security=reality&pbk=<public-key>&sid=<short-id>&sni=www.example.com'
-
-# With custom uTLS fingerprint (optional, defaults to chrome)
-./proxy-tunnel -link 'vless://uuid@example.com:443?security=reality&pbk=<public-key>&sid=<short-id>&sni=www.example.com&fp=firefox'
-```
-
-**Reality Requirements**:
-- Public key (pbk): Base64-encoded Reality public key
-- Short ID (sid): Short identifier for the connection
-- SNI: Server Name Indication for TLS
-- Fingerprint (fp): Optional, defaults to "chrome". Valid options: chrome, firefox, safari, edge, ios, android, random
-
-**Note**: uTLS is automatically enabled for Reality connections.
-
-#### VMess
-```bash
-./proxy-tunnel -link 'vmess://base64encodedconfig'
-```
-
-#### Shadowsocks
-```bash
-./proxy-tunnel -link 'ss://method:password@server:port'
-```
-
-#### Trojan
-```bash
-./proxy-tunnel -link 'trojan://password@example.com:443?sni=example.com'
-```
-
-#### SOCKS5
-```bash
-./proxy-tunnel -link 'socks5://user:pass@proxy.example.com:1080'
-```
-
-#### HTTP/HTTPS Proxy
-```bash
-./proxy-tunnel -link 'https://user:pass@proxy.example.com:8080'
-```
-
-#### Custom Listen Address
-```bash
-./proxy-tunnel -link 'vless://...' -listen '0.0.0.0:1080' -http-port 8080
-```
-
-## After Starting
-
-Once the proxy is running, you'll see:
-
-```
-✓ Proxy started successfully!
-  SOCKS5: 127.0.0.1:1080
-  HTTP:   127.0.0.1:1081
-  Routing through: proxy
-
-Press Ctrl+C to stop...
-```
-
-You can then configure your applications to use:
-- **SOCKS5 proxy**: `127.0.0.1:1080`
-- **HTTP proxy**: `127.0.0.1:1081`
-
-## Testing
-
-### Using curl
-```bash
-# Test with HTTP proxy
-curl -x http://127.0.0.1:1081 https://ifconfig.me
-
-# Test with SOCKS5 proxy
-curl -x socks5://127.0.0.1:1080 https://ifconfig.me
-```
-
-### Using Firefox
-1. Go to Settings → Network Settings
-2. Select "Manual proxy configuration"
-3. Set HTTP Proxy: `127.0.0.1`, Port: `1081`
-4. Or set SOCKS Host: `127.0.0.1`, Port: `1080`
-
-### Using Chrome/Chromium
-```bash
-chromium --proxy-server="http://127.0.0.1:1081"
-# or
-chromium --proxy-server="socks5://127.0.0.1:1080"
-```
-
-## Dependencies
-
-- sing-box (latest dev-next branch)
-- All dependencies are managed via Go modules
-
-## Architecture
-
-This application uses sing-box as a **library**, not as a separate process:
-
-1. **Parses proxy share links** using `pkg/sharelink` library
-2. **Manages proxy lifecycle** using `pkg/proxybox` library
-3. **Starts local inbound proxies** (HTTP + SOCKS5)
-4. **Routes all traffic** through the configured outbound proxy
-5. **All components run** in a single Go process
-
-## Libraries
-
-This project provides two reusable libraries:
-
-### 1. Sharelink Parser (`pkg/sharelink`)
-
-Parse proxy share links into sing-box configurations.
-
-**Quick Example:**
 ```go
-import "proxy-tunnel/pkg/sharelink"
+package main
 
-parser := sharelink.New()
-outbound, err := parser.Parse("vless://uuid@server:443?security=reality&pbk=key&sid=id&sni=example.com")
-// Use outbound in your configuration...
-```
-
-**Features:**
-- Parse all major proxy protocols (VLESS, VMess, SS, Trojan, SOCKS, HTTP)
-- Auto-detect protocol from URL scheme
-- Comprehensive test coverage (92.8%)
-- Fast performance (~3-8μs per parse)
-
-See [`pkg/sharelink/README.md`](pkg/sharelink/README.md) for full documentation.
-
-### 2. ProxyBox (`pkg/proxybox`)
-
-Manage sing-box instances programmatically.
-
-**Quick Example:**
-```go
 import (
-    "proxy-tunnel/pkg/proxybox"
-    "proxy-tunnel/pkg/sharelink"
+    "fmt"
+    "github.com/lunardoesdev/singerbox"
 )
 
-// Parse share link
-parser := sharelink.New()
-outbound, _ := parser.Parse("ss://aes-256-gcm:password@server:8388")
+func main() {
+    // Create parser
+    parser := singerbox.NewParser()
 
-// Create and start proxy
-pb, _ := proxybox.New(proxybox.Config{
-    Outbound:   outbound,
+    // Parse any share link
+    outbound, err := parser.Parse("vless://uuid@server:443?security=tls&type=ws")
+    if err != nil {
+        panic(err)
+    }
+
+    fmt.Printf("Parsed %s proxy\n", outbound.Type)
+}
+```
+
+### Start a Proxy
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/lunardoesdev/singerbox"
+)
+
+func main() {
+    // Parse share link
+    parser := singerbox.NewParser()
+    outbound, _ := parser.Parse("ss://aes-256-gcm:password@server:8388")
+
+    // Create and start proxy
+    pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
+        Outbound:   outbound,
+        ListenAddr: "127.0.0.1:1080",
+        HTTPPort:   1081,
+    })
+
+    pb.Start()
+    defer pb.Stop()
+
+    fmt.Printf("SOCKS5: %s\n", pb.ListenAddr())
+    fmt.Printf("HTTP:   %s\n", pb.HTTPAddr())
+
+    // Proxy is now running...
+}
+```
+
+## API Overview
+
+### Share Link Parser
+
+**NewParser()** - Create a new share link parser
+
+```go
+parser := singerbox.NewParser()
+```
+
+**Parse(link)** - Parse any supported share link format
+
+```go
+outbound, err := parser.Parse("vless://...")
+```
+
+**Protocol-specific parsers:**
+- `ParseVLESS(link)` - Parse VLESS links
+- `ParseVMess(link)` - Parse VMess links
+- `ParseShadowsocks(link)` - Parse Shadowsocks links
+- `ParseTrojan(link)` - Parse Trojan links
+- `ParseSOCKS(link)` - Parse SOCKS5 links
+- `ParseHTTP(link)` - Parse HTTP/HTTPS links
+
+### Proxy Manager
+
+**NewProxyBox(config)** - Create a new proxy instance
+
+```go
+pb, err := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
+    Outbound:   outbound,      // sing-box outbound config
+    ListenAddr: "127.0.0.1:1080", // SOCKS5 address (optional)
+    HTTPPort:   1081,          // HTTP port (optional)
+    LogLevel:   "info",        // Log level (optional)
+})
+```
+
+**Start()** - Start the proxy
+
+```go
+err := pb.Start()
+```
+
+**Stop()** - Stop the proxy
+
+```go
+err := pb.Stop()
+```
+
+**Status methods:**
+- `IsRunning()` - Check if proxy is running
+- `ListenAddr()` - Get SOCKS5 address
+- `HTTPAddr()` - Get HTTP address
+
+## Supported Protocols
+
+| Protocol | Format | Features |
+|----------|--------|----------|
+| **VLESS** | `vless://uuid@server:port?params` | TLS, Reality, WebSocket, gRPC, HTTP/2 |
+| **VMess** | `vmess://base64json` | All transports and security options |
+| **Shadowsocks** | `ss://method:pass@server:port` | All encryption methods |
+| **Trojan** | `trojan://pass@server:port?params` | TLS and transports |
+| **SOCKS5** | `socks5://[user:pass@]server:port` | With/without authentication |
+| **HTTP/HTTPS** | `http[s]://[user:pass@]server:port` | Basic and authenticated |
+
+## Examples
+
+### Reality Protocol
+
+```go
+parser := singerbox.NewParser()
+outbound, _ := parser.Parse(
+    "vless://uuid@server:443?security=reality&pbk=publicKey&sid=shortID&sni=example.com&fp=chrome"
+)
+
+// Reality with custom fingerprint
+pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
+    Outbound: outbound,
+})
+pb.Start()
+```
+
+### Multiple Proxy Instances
+
+```go
+// Create two proxies on different ports
+pb1, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
+    Outbound:   outbound1,
     ListenAddr: "127.0.0.1:1080",
     HTTPPort:   1081,
 })
-pb.Start()
-defer pb.Stop()
 
-fmt.Printf("SOCKS5: %s\n", pb.ListenAddr())
-fmt.Printf("HTTP:   %s\n", pb.HTTPAddr())
+pb2, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
+    Outbound:   outbound2,
+    ListenAddr: "127.0.0.1:2080",
+    HTTPPort:   2081,
+})
+
+pb1.Start()
+pb2.Start()
+
+// Both proxies running simultaneously
 ```
 
-**Features:**
-- Simple Start/Stop API
-- Configuration management with sensible defaults
-- Dual proxy modes (SOCKS5 + HTTP)
-- Multiple instances support
-- Comprehensive test coverage (89.1%)
+### Custom Configuration
 
-See [`pkg/proxybox/README.md`](pkg/proxybox/README.md) for full documentation.
+```go
+pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
+    Outbound:   outbound,
+    ListenAddr: "0.0.0.0:9050",  // Listen on all interfaces
+    HTTPPort:   9051,
+    LogLevel:   "debug",          // Verbose logging
+})
+```
 
-## Running Tests
+## Command-Line Tool
+
+A proxy-tunnel CLI tool is included in `cmd/proxy-tunnel/`:
+
+```bash
+# Build
+go build -tags "with_utls" -o proxy-tunnel ./cmd/proxy-tunnel/
+
+# Or use Makefile
+make build-minimal
+
+# Run
+./proxy-tunnel -link 'vless://uuid@server:443?security=tls&type=ws'
+```
+
+## Testing
 
 ```bash
 # Run all tests
-go test ./...
+go test
 
-# Run with coverage
-go test ./... -cover
+# With coverage
+go test -cover
+# Output: coverage: 91.8% of statements
 
-# Run specific library tests
-go test -v ./pkg/sharelink/
-go test -v ./pkg/proxybox/
+# Verbose
+go test -v
 
-# Run benchmarks
-go test -bench=. ./pkg/sharelink/
+# Benchmarks
+go test -bench=.
 ```
+
+## Build Tags
+
+When building applications that use this library, include appropriate tags:
+
+```bash
+# Minimal (Reality support)
+go build -tags "with_utls" your-app.go
+
+# Full features
+go build -tags "with_quic,with_utls,with_wireguard,with_dhcp,with_clash_api" your-app.go
+```
+
+## Requirements
+
+- Go 1.21 or later
+- sing-box library (automatically installed)
 
 ## License
 
-This project uses sing-box library which is licensed under GPLv3 or later.
+This project uses the sing-box library which is licensed under GPLv3 or later.
+
+## Contributing
+
+Contributions are welcome! Please ensure:
+- Tests pass: `go test`
+- Code is formatted: `go fmt`
+- Coverage is maintained: `go test -cover`
+
+## Documentation
+
+See [pkg.go.dev](https://pkg.go.dev/github.com/lunardoesdev/singerbox) for complete API documentation.
+
+## Project Structure
+
+```
+singerbox/
+├── sharelink.go               # Share link parser
+├── proxybox.go                # Proxy manager
+├── *_test.go                  # Comprehensive tests
+├── cmd/
+│   └── proxy-tunnel/          # CLI tool
+│       └── main.go
+├── go.mod
+└── README.md
+```
+
+## Credits
+
+Built on top of [sing-box](https://github.com/SagerNet/sing-box) by SagerNet.

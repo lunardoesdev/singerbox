@@ -9,7 +9,7 @@
 [![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Coverage](https://img.shields.io/badge/coverage-91.8%25-brightgreen.svg)](.)
 
-```go
+```
 parser := singerbox.NewParser()
 outbound, _ := parser.Parse("vless://uuid@server:443?security=reality&pbk=key...")
 pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{

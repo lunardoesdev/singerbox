@@ -106,9 +106,9 @@ import (
 )
 
 func main() {
-    // Parse the share link
+    // Parse the share link (replace with your actual proxy server)
     parser := singerbox.NewParser()
-    outbound, _ := parser.Parse("ss://aes-256-gcm:mypassword@server.com:8388")
+    outbound, _ := parser.Parse("ss://aes-256-gcm:mypassword@your-server.com:8388")
 
     // Create and start the proxy on custom port
     pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
@@ -121,7 +121,9 @@ func main() {
 
     fmt.Println("🚀 Proxy is running!")
     fmt.Printf("   Mixed (SOCKS5/HTTP): %s\n", pb.ListenAddr())
-    fmt.Println("\nPress Ctrl+C to stop...")
+    fmt.Printf("   Configure your browser to use HTTP or SOCKS5 proxy at %s\n", pb.ListenAddr())
+    fmt.Println("\nNote: Make sure your proxy server is reachable, or connections will timeout")
+    fmt.Println("Press Ctrl+C to stop...")
 
     // Wait for interrupt
     c := make(chan os.Signal, 1)

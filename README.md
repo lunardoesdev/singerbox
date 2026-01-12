@@ -174,51 +174,85 @@ chromium --proxy-server="socks5://127.0.0.1:1080"
 This application uses sing-box as a **library**, not as a separate process:
 
 1. **Parses proxy share links** using `pkg/sharelink` library
-2. **Creates sing-box instance** programmatically
+2. **Manages proxy lifecycle** using `pkg/proxybox` library
 3. **Starts local inbound proxies** (HTTP + SOCKS5)
 4. **Routes all traffic** through the configured outbound proxy
 5. **All components run** in a single Go process
 
-## Using the Sharelink Parser Library
+## Libraries
 
-The share link parsing functionality is available as a reusable library at `pkg/sharelink`.
+This project provides two reusable libraries:
 
-### Quick Example
+### 1. Sharelink Parser (`pkg/sharelink`)
 
+Parse proxy share links into sing-box configurations.
+
+**Quick Example:**
 ```go
 import "proxy-tunnel/pkg/sharelink"
 
 parser := sharelink.New()
 outbound, err := parser.Parse("vless://uuid@server:443?security=reality&pbk=key&sid=id&sni=example.com")
-if err != nil {
-    // handle error
-}
-
-// Use outbound in your sing-box configuration
-config := option.Options{
-    Outbounds: []option.Outbound{outbound},
-    // ...
-}
+// Use outbound in your configuration...
 ```
 
-### Features
-
-- ✅ Parse all major proxy protocols (VLESS, VMess, SS, Trojan, SOCKS, HTTP)
-- ✅ Auto-detect protocol from URL scheme
-- ✅ Comprehensive test coverage (100%)
-- ✅ Fast performance (~3-8μs per parse)
-- ✅ Clean, documented API
+**Features:**
+- Parse all major proxy protocols (VLESS, VMess, SS, Trojan, SOCKS, HTTP)
+- Auto-detect protocol from URL scheme
+- Comprehensive test coverage (92.8%)
+- Fast performance (~3-8μs per parse)
 
 See [`pkg/sharelink/README.md`](pkg/sharelink/README.md) for full documentation.
 
-### Running Tests
+### 2. ProxyBox (`pkg/proxybox`)
+
+Manage sing-box instances programmatically.
+
+**Quick Example:**
+```go
+import (
+    "proxy-tunnel/pkg/proxybox"
+    "proxy-tunnel/pkg/sharelink"
+)
+
+// Parse share link
+parser := sharelink.New()
+outbound, _ := parser.Parse("ss://aes-256-gcm:password@server:8388")
+
+// Create and start proxy
+pb, _ := proxybox.New(proxybox.Config{
+    Outbound:   outbound,
+    ListenAddr: "127.0.0.1:1080",
+    HTTPPort:   1081,
+})
+pb.Start()
+defer pb.Stop()
+
+fmt.Printf("SOCKS5: %s\n", pb.ListenAddr())
+fmt.Printf("HTTP:   %s\n", pb.HTTPAddr())
+```
+
+**Features:**
+- Simple Start/Stop API
+- Configuration management with sensible defaults
+- Dual proxy modes (SOCKS5 + HTTP)
+- Multiple instances support
+- Comprehensive test coverage (89.1%)
+
+See [`pkg/proxybox/README.md`](pkg/proxybox/README.md) for full documentation.
+
+## Running Tests
 
 ```bash
 # Run all tests
 go test ./...
 
-# Run sharelink library tests with coverage
-go test -cover ./pkg/sharelink/
+# Run with coverage
+go test ./... -cover
+
+# Run specific library tests
+go test -v ./pkg/sharelink/
+go test -v ./pkg/proxybox/
 
 # Run benchmarks
 go test -bench=. ./pkg/sharelink/

@@ -1,22 +1,14 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
-	"net/netip"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
+	"proxy-tunnel/pkg/proxybox"
 	"proxy-tunnel/pkg/sharelink"
-
-	"github.com/sagernet/sing-box"
-	C "github.com/sagernet/sing-box/constant"
-	"github.com/sagernet/sing-box/include"
-	"github.com/sagernet/sing-box/option"
-	"github.com/sagernet/sing/common/json/badoption"
 )
 
 var (
@@ -44,34 +36,28 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Create sing-box configuration
-	config := createConfig(outbound, *listenAddr, *httpPort)
-
-	// Create and start sing-box instance with proper context
-	ctx := context.Background()
-	ctx = include.Context(ctx) // Register all protocol handlers
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	instance, err := box.New(box.Options{
-		Context: ctx,
-		Options: config,
+	// Create proxy box
+	pb, err := proxybox.New(proxybox.Config{
+		Outbound:   outbound,
+		ListenAddr: *listenAddr,
+		HTTPPort:   *httpPort,
+		LogLevel:   "info",
 	})
 	if err != nil {
-		fmt.Printf("Error creating sing-box instance: %v\n", err)
+		fmt.Printf("Error creating proxy box: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Start the box
-	err = instance.Start()
+	// Start the proxy
+	err = pb.Start()
 	if err != nil {
-		fmt.Printf("Error starting sing-box: %v\n", err)
+		fmt.Printf("Error starting proxy: %v\n", err)
 		os.Exit(1)
 	}
 
 	fmt.Printf("✓ Proxy started successfully!\n")
-	fmt.Printf("  SOCKS5: %s\n", *listenAddr)
-	fmt.Printf("  HTTP:   127.0.0.1:%d\n", *httpPort)
+	fmt.Printf("  SOCKS5: %s\n", pb.ListenAddr())
+	fmt.Printf("  HTTP:   %s\n", pb.HTTPAddr())
 	fmt.Printf("  Routing through: %s\n", outbound.Tag)
 	fmt.Println("\nPress Ctrl+C to stop...")
 
@@ -81,85 +67,5 @@ func main() {
 	<-sigCh
 
 	fmt.Println("\nStopping proxy...")
-	instance.Close()
-}
-
-func createConfig(outbound option.Outbound, socksAddr string, httpPort int) option.Options {
-	// Split address for HTTP proxy
-	host := strings.Split(socksAddr, ":")[0]
-
-	// Parse listen address
-	listenIP, err := netip.ParseAddr(host)
-	if err != nil {
-		listenIP = netip.MustParseAddr("127.0.0.1")
-	}
-	listenAddr := (*badoption.Addr)(&listenIP)
-
-	return option.Options{
-		Log: &option.LogOptions{
-			Level:  "info",
-			Output: "stderr",
-		},
-		Inbounds: []option.Inbound{
-			{
-				Type: "mixed",
-				Tag:  "mixed-in",
-				Options: &option.HTTPMixedInboundOptions{
-					ListenOptions: option.ListenOptions{
-						Listen:     listenAddr,
-						ListenPort: uint16(getPort(socksAddr)),
-					},
-				},
-			},
-			{
-				Type: "http",
-				Tag:  "http-in",
-				Options: &option.HTTPMixedInboundOptions{
-					ListenOptions: option.ListenOptions{
-						Listen:     listenAddr,
-						ListenPort: uint16(httpPort),
-					},
-				},
-			},
-		},
-		Outbounds: []option.Outbound{
-			outbound,
-			{
-				Type:    "direct",
-				Tag:     "direct",
-				Options: &option.DirectOutboundOptions{},
-			},
-			{
-				Type:    "block",
-				Tag:     "block",
-				Options: &option.StubOptions{},
-			},
-		},
-		Route: &option.RouteOptions{
-			Rules: []option.Rule{
-				{
-					Type: C.RuleTypeDefault,
-					DefaultOptions: option.DefaultRule{
-						RuleAction: option.RuleAction{
-							Action: C.RuleActionTypeRoute,
-							RouteOptions: option.RouteActionOptions{
-								Outbound: outbound.Tag,
-							},
-						},
-					},
-				},
-			},
-			AutoDetectInterface: true,
-		},
-	}
-}
-
-func getPort(hostPort string) int {
-	parts := strings.Split(hostPort, ":")
-	if len(parts) < 2 {
-		return 443
-	}
-	port := 443
-	fmt.Sscanf(parts[len(parts)-1], "%d", &port)
-	return port
+	pb.Stop()
 }

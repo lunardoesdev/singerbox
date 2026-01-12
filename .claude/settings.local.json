@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go mod init:*)",
+      "Bash(go get:*)",
+      "Bash(go mod tidy:*)",
+      "Bash(go build:*)",
+      "Bash(go doc:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(./proxy-tunnel:*)",
+      "Bash(chmod:*)",
+      "Bash(ls:*)",
+      "Bash(timeout 3 ./proxy-tunnel:*)",
+      "Bash(make info:*)",
+      "Bash(make test:*)",
+      "Bash(make build:*)",
+      "WebSearch",
+      "Bash(go test:*)"
+    ]
+  }
+}

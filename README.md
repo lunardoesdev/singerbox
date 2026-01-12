@@ -12,7 +12,10 @@
 ```go
 parser := singerbox.NewParser()
 outbound, _ := parser.Parse("vless://uuid@server:443?security=reality&pbk=key...")
-pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{Outbound: outbound})
+pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
+    Outbound:   outbound,
+    ListenAddr: "127.0.0.1:1080",  // SOCKS5/HTTP on port 1080
+})
 pb.Start() // 🚀 Proxy is now running!
 ```
 
@@ -102,10 +105,10 @@ func main() {
     parser := singerbox.NewParser()
     outbound, _ := parser.Parse("ss://aes-256-gcm:mypassword@server.com:8388")
 
-    // Create and start the proxy
+    // Create and start the proxy on custom port
     pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
         Outbound:   outbound,
-        ListenAddr: "127.0.0.1:1080",
+        ListenAddr: "127.0.0.1:1080",  // Listen on port 1080 for SOCKS5 and HTTP
     })
 
     pb.Start()

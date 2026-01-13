@@ -108,8 +108,21 @@ func NewProxyBox(cfg ProxyBoxConfig) (*ProxyBox, error) {
 
 // Start starts the proxy box
 func (pb *ProxyBox) Start() error {
+	return pb.StartContext(context.Background())
+}
+
+// StartContext starts the proxy box with a context for timeout/cancellation.
+// If the context is cancelled before startup completes, the operation returns an error.
+func (pb *ProxyBox) StartContext(ctx context.Context) error {
 	if pb.instance != nil {
 		return E.New("proxy box already started")
+	}
+
+	// Check for context cancellation before starting
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
 	}
 
 	instance, err := box.New(box.Options{
@@ -120,9 +133,21 @@ func (pb *ProxyBox) Start() error {
 		return E.Cause(err, "create sing-box instance")
 	}
 
-	err = instance.Start()
-	if err != nil {
-		return E.Cause(err, "start sing-box")
+	// Start with context awareness
+	done := make(chan error, 1)
+	go func() {
+		done <- instance.Start()
+	}()
+
+	select {
+	case <-ctx.Done():
+		// Context cancelled, try to close the instance
+		instance.Close()
+		return ctx.Err()
+	case err := <-done:
+		if err != nil {
+			return E.Cause(err, "start sing-box")
+		}
 	}
 
 	pb.instance = instance
@@ -131,17 +156,46 @@ func (pb *ProxyBox) Start() error {
 
 // Stop stops the proxy box
 func (pb *ProxyBox) Stop() error {
+	return pb.StopContext(context.Background())
+}
+
+// StopContext stops the proxy box with a context for timeout/cancellation.
+// If the context is cancelled before shutdown completes, the operation returns an error
+// but the proxy box may still be stopping in the background.
+func (pb *ProxyBox) StopContext(ctx context.Context) error {
 	if pb.instance == nil {
 		return E.New("proxy box not started")
 	}
 
-	err := pb.instance.Close()
-	pb.instance = nil
-	if pb.cancel != nil {
-		pb.cancel()
+	// Check for context cancellation before stopping
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
 	}
 
-	return err
+	instance := pb.instance
+	pb.instance = nil
+
+	// Close with context awareness
+	done := make(chan error, 1)
+	go func() {
+		done <- instance.Close()
+	}()
+
+	select {
+	case <-ctx.Done():
+		// Context cancelled, but close may still complete in background
+		if pb.cancel != nil {
+			pb.cancel()
+		}
+		return ctx.Err()
+	case err := <-done:
+		if pb.cancel != nil {
+			pb.cancel()
+		}
+		return err
+	}
 }
 
 // IsRunning returns true if the proxy box is currently running
@@ -235,13 +289,32 @@ func createConfig(cfg ProxyBoxConfig) (option.Options, error) {
 	}, nil
 }
 
-// getPort extracts port from host:port string
+// getPortOrDefault extracts port from host:port string, using defaultPort if not found
+// Handles IPv6 addresses like [::1]:8080
 func getPortOrDefault(defaultPort int, hostPort string) int {
+	// Handle IPv6 addresses
+	if strings.HasPrefix(hostPort, "[") {
+		if idx := strings.LastIndex(hostPort, "]:"); idx != -1 {
+			var port int
+			if _, err := fmt.Sscanf(hostPort[idx+2:], "%d", &port); err == nil {
+				if port >= 1 && port <= 65535 {
+					return port
+				}
+			}
+		}
+		return defaultPort
+	}
+
+	// IPv4 or hostname format
 	parts := strings.Split(hostPort, ":")
 	if len(parts) < 2 {
-		return 1080 // Default SOCKS port
+		return defaultPort
 	}
-	port := 1080
-	fmt.Sscanf(parts[len(parts)-1], "%d", &port)
-	return port
+	var port int
+	if _, err := fmt.Sscanf(parts[len(parts)-1], "%d", &port); err == nil {
+		if port >= 1 && port <= 65535 {
+			return port
+		}
+	}
+	return defaultPort
 }

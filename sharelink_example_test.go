@@ -8,12 +8,28 @@ import (
 	"github.com/lunardoesdev/singerbox"
 )
 
+// vmessExampleConfig is used for constructing VMess links in examples
+type vmessExampleConfig struct {
+	V    string `json:"v"`
+	Ps   string `json:"ps"`
+	Add  string `json:"add"`
+	Port string `json:"port"`
+	ID   string `json:"id"`
+	Aid  string `json:"aid"`
+	Net  string `json:"net"`
+	Type string `json:"type"`
+	Host string `json:"host"`
+	Path string `json:"path"`
+	TLS  string `json:"tls"`
+	SNI  string `json:"sni"`
+	ALPN string `json:"alpn"`
+}
+
 // Example demonstrates basic usage of the sharelink parser
 func Example_parse() {
-	
 
 	// Parse a VLESS link
-	link := "vless://uuid@example.com:443?type=ws&security=tls&path=/ws#MyProxy"
+	link := "vless://550e8400-e29b-41d4-a716-446655440000@example.com:443?type=ws&security=tls&path=/ws#MyProxy"
 	outbound, err := singerbox.Parse(link)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
@@ -29,7 +45,6 @@ func Example_parse() {
 
 // ExampleParser_ParseVLESS demonstrates VLESS parsing
 func Example_parseVLESS() {
-	
 
 	link := "vless://a1b2c3d4-e5f6-7890-abcd-ef1234567890@server.example.com:443?type=ws&security=tls&path=/vless&sni=server.example.com#TestServer"
 	outbound, err := singerbox.ParseVLESS(link)
@@ -47,9 +62,8 @@ func Example_parseVLESS() {
 
 // ExampleParser_ParseVLESS_reality demonstrates VLESS with Reality
 func Example_parseVLESS_reality() {
-	
 
-	link := "vless://uuid@server:443?security=reality&pbk=publicKey&sid=shortID&sni=www.example.com&fp=chrome"
+	link := "vless://550e8400-e29b-41d4-a716-446655440000@server:443?security=reality&pbk=publicKey&sid=shortID&sni=www.example.com&fp=chrome"
 	outbound, err := singerbox.ParseVLESS(link)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
@@ -67,15 +81,14 @@ func Example_parseVLESS_reality() {
 
 // ExampleParser_ParseVMess demonstrates VMess parsing
 func Example_parseVMess() {
-	
 
 	// Create VMess config
-	config := singerbox.VMessConfig{
+	config := vmessExampleConfig{
 		V:    "2",
 		Ps:   "TestServer",
 		Add:  "vmess.example.com",
 		Port: "443",
-		ID:   "uuid-here",
+		ID:   "550e8400-e29b-41d4-a716-446655440000",
 		Aid:  "0",
 		Net:  "ws",
 		Path: "/vmess",
@@ -101,7 +114,6 @@ func Example_parseVMess() {
 
 // ExampleParser_ParseShadowsocks demonstrates Shadowsocks parsing
 func Example_parseShadowsocks() {
-	
 
 	link := "ss://aes-256-gcm:mypassword@ss.example.com:8388#MySSProxy"
 	outbound, err := singerbox.ParseShadowsocks(link)
@@ -119,7 +131,6 @@ func Example_parseShadowsocks() {
 
 // ExampleParser_ParseTrojan demonstrates Trojan parsing
 func Example_parseTrojan() {
-	
 
 	link := "trojan://mypassword@trojan.example.com:443?sni=trojan.example.com#TrojanProxy"
 	outbound, err := singerbox.ParseTrojan(link)
@@ -137,7 +148,6 @@ func Example_parseTrojan() {
 
 // ExampleParser_ParseSOCKS demonstrates SOCKS5 parsing
 func Example_parseSOCKS() {
-	
 
 	link := "socks5://user:pass@proxy.example.com:1080"
 	outbound, err := singerbox.ParseSOCKS(link)
@@ -153,7 +163,6 @@ func Example_parseSOCKS() {
 
 // ExampleParser_ParseHTTP demonstrates HTTP proxy parsing
 func Example_parseHTTP() {
-	
 
 	link := "https://user:pass@secure.proxy.com:8080"
 	outbound, err := singerbox.ParseHTTP(link)
@@ -171,10 +180,9 @@ func Example_parseHTTP() {
 
 // ExampleParser_Parse_autoDetect demonstrates auto-detection
 func Example_parse_autoDetect() {
-	
 
 	links := []string{
-		"vless://uuid@server:443",
+		"vless://550e8400-e29b-41d4-a716-446655440000@server:443",
 		"ss://method:pass@server:8388",
 		"trojan://pass@server:443",
 	}

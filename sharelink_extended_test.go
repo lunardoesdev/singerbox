@@ -9,6 +9,23 @@ import (
 	"github.com/sagernet/sing-box/option"
 )
 
+// vmessExtendedConfig is used for constructing test VMess links
+type vmessExtendedConfig struct {
+	V    string `json:"v"`
+	Ps   string `json:"ps"`
+	Add  string `json:"add"`
+	Port string `json:"port"`
+	ID   string `json:"id"`
+	Aid  string `json:"aid"`
+	Net  string `json:"net"`
+	Type string `json:"type"`
+	Host string `json:"host"`
+	Path string `json:"path"`
+	TLS  string `json:"tls"`
+	SNI  string `json:"sni"`
+	ALPN string `json:"alpn"`
+}
+
 // TestParseVLESS_ExtendedConfigurations tests various VLESS configurations
 func TestParseVLESS_ExtendedConfigurations(t *testing.T) {
 	tests := []struct {
@@ -18,8 +35,8 @@ func TestParseVLESS_ExtendedConfigurations(t *testing.T) {
 		check   func(*testing.T, option.Outbound)
 	}{
 		{
-			name: "VLESS with flow xtls-rprx-vision",
-			link: "vless://uuid@server:443?flow=xtls-rprx-vision&security=tls&sni=server.com",
+			name:    "VLESS with flow xtls-rprx-vision",
+			link:    "vless://550e8400-e29b-41d4-a716-446655440000@server:443?flow=xtls-rprx-vision&security=tls&sni=server.com",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.VLESSOutboundOptions)
@@ -32,8 +49,8 @@ func TestParseVLESS_ExtendedConfigurations(t *testing.T) {
 			},
 		},
 		{
-			name: "VLESS with complex WebSocket path",
-			link: "vless://uuid@ws.server.com:443?type=ws&security=tls&path=/api/v1/ws?token=abc123&host=ws.server.com#ComplexWS",
+			name:    "VLESS with complex WebSocket path",
+			link:    "vless://550e8400-e29b-41d4-a716-446655440000@ws.server.com:443?type=ws&security=tls&path=/api/v1/ws?token=abc123&host=ws.server.com#ComplexWS",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.VLESSOutboundOptions)
@@ -49,8 +66,8 @@ func TestParseVLESS_ExtendedConfigurations(t *testing.T) {
 			},
 		},
 		{
-			name: "VLESS with IPv6",
-			link: "vless://uuid@[2001:db8::1]:443?security=tls&sni=example.com",
+			name:    "VLESS with IPv6",
+			link:    "vless://550e8400-e29b-41d4-a716-446655440000@[2001:db8::1]:443?security=tls&sni=example.com",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.VLESSOutboundOptions)
@@ -63,8 +80,8 @@ func TestParseVLESS_ExtendedConfigurations(t *testing.T) {
 			},
 		},
 		{
-			name: "VLESS with non-standard port",
-			link: "vless://uuid@server.com:8443?security=tls&sni=server.com#NonStandardPort",
+			name:    "VLESS with non-standard port",
+			link:    "vless://550e8400-e29b-41d4-a716-446655440000@server.com:8443?security=tls&sni=server.com#NonStandardPort",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.VLESSOutboundOptions)
@@ -77,8 +94,8 @@ func TestParseVLESS_ExtendedConfigurations(t *testing.T) {
 			},
 		},
 		{
-			name: "VLESS with Reality and custom fingerprint",
-			link: "vless://uuid@server:443?security=reality&pbk=testkey&sid=abc&sni=www.cloudflare.com&fp=firefox",
+			name:    "VLESS with Reality and custom fingerprint",
+			link:    "vless://550e8400-e29b-41d4-a716-446655440000@server:443?security=reality&pbk=testkey&sid=abc&sni=www.cloudflare.com&fp=firefox",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.VLESSOutboundOptions)
@@ -94,8 +111,8 @@ func TestParseVLESS_ExtendedConfigurations(t *testing.T) {
 			},
 		},
 		{
-			name: "VLESS with HTTP/2 transport",
-			link: "vless://uuid@server:443?type=http&security=tls&path=/api&host=server.com",
+			name:    "VLESS with HTTP/2 transport",
+			link:    "vless://550e8400-e29b-41d4-a716-446655440000@server:443?type=http&security=tls&path=/api&host=server.com",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.VLESSOutboundOptions)
@@ -108,8 +125,8 @@ func TestParseVLESS_ExtendedConfigurations(t *testing.T) {
 			},
 		},
 		{
-			name: "VLESS with special characters in UUID (URL encoded)",
-			link: "vless://550e8400-e29b-41d4-a716-446655440000@server:443?security=tls",
+			name:    "VLESS with special characters in UUID (URL encoded)",
+			link:    "vless://550e8400-e29b-41d4-a716-446655440000@server:443?security=tls",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.VLESSOutboundOptions)
@@ -122,8 +139,8 @@ func TestParseVLESS_ExtendedConfigurations(t *testing.T) {
 			},
 		},
 		{
-			name: "VLESS with Chinese characters in name",
-			link: "vless://uuid@server:443?security=tls#测试服务器",
+			name:    "VLESS with Chinese characters in name",
+			link:    "vless://550e8400-e29b-41d4-a716-446655440000@server:443?security=tls#测试服务器",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				if out.Tag != "测试服务器" {
@@ -133,7 +150,6 @@ func TestParseVLESS_ExtendedConfigurations(t *testing.T) {
 		},
 	}
 
-	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := singerbox.ParseVLESS(tt.link)
@@ -152,18 +168,18 @@ func TestParseVLESS_ExtendedConfigurations(t *testing.T) {
 func TestParseVMess_ExtendedConfigurations(t *testing.T) {
 	tests := []struct {
 		name    string
-		config  singerbox.VMessConfig
+		config  vmessExtendedConfig
 		wantErr bool
 		check   func(*testing.T, option.Outbound)
 	}{
 		{
 			name: "VMess with gRPC transport",
-			config: singerbox.VMessConfig{
+			config: vmessExtendedConfig{
 				V:    "2",
 				Ps:   "gRPC Server",
 				Add:  "grpc.example.com",
 				Port: "443",
-				ID:   "uuid-here",
+				ID:   "550e8400-e29b-41d4-a716-446655440000",
 				Aid:  "0",
 				Net:  "grpc",
 				Path: "GunService",
@@ -186,12 +202,12 @@ func TestParseVMess_ExtendedConfigurations(t *testing.T) {
 		},
 		{
 			name: "VMess with HTTP/2",
-			config: singerbox.VMessConfig{
+			config: vmessExtendedConfig{
 				V:    "2",
 				Ps:   "H2 Server",
 				Add:  "h2.example.com",
 				Port: "443",
-				ID:   "uuid-here",
+				ID:   "550e8400-e29b-41d4-a716-446655440000",
 				Aid:  "0",
 				Net:  "h2",
 				Path: "/h2path",
@@ -211,12 +227,12 @@ func TestParseVMess_ExtendedConfigurations(t *testing.T) {
 		},
 		{
 			name: "VMess without TLS",
-			config: singerbox.VMessConfig{
+			config: vmessExtendedConfig{
 				V:    "2",
 				Ps:   "No TLS",
 				Add:  "plain.example.com",
 				Port: "80",
-				ID:   "uuid-here",
+				ID:   "550e8400-e29b-41d4-a716-446655440000",
 				Aid:  "0",
 				Net:  "tcp",
 			},
@@ -233,12 +249,12 @@ func TestParseVMess_ExtendedConfigurations(t *testing.T) {
 		},
 		{
 			name: "VMess with custom port 8443",
-			config: singerbox.VMessConfig{
+			config: vmessExtendedConfig{
 				V:    "2",
 				Ps:   "Custom Port",
 				Add:  "server.com",
 				Port: "8443",
-				ID:   "uuid-here",
+				ID:   "550e8400-e29b-41d4-a716-446655440000",
 				Aid:  "0",
 				Net:  "ws",
 				Path: "/ws",
@@ -257,12 +273,12 @@ func TestParseVMess_ExtendedConfigurations(t *testing.T) {
 		},
 		{
 			name: "VMess with ALPN",
-			config: singerbox.VMessConfig{
+			config: vmessExtendedConfig{
 				V:    "2",
 				Ps:   "ALPN Server",
 				Add:  "alpn.example.com",
 				Port: "443",
-				ID:   "uuid-here",
+				ID:   "550e8400-e29b-41d4-a716-446655440000",
 				Aid:  "0",
 				Net:  "ws",
 				TLS:  "tls",
@@ -281,7 +297,6 @@ func TestParseVMess_ExtendedConfigurations(t *testing.T) {
 		},
 	}
 
-	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			configJSON, _ := json.Marshal(tt.config)
@@ -309,8 +324,8 @@ func TestParseShadowsocks_ExtendedConfigurations(t *testing.T) {
 		check   func(*testing.T, option.Outbound)
 	}{
 		{
-			name: "Shadowsocks with chacha20-ietf-poly1305",
-			link: "ss://chacha20-ietf-poly1305:password123@ss.example.com:8388#FastServer",
+			name:    "Shadowsocks with chacha20-ietf-poly1305",
+			link:    "ss://chacha20-ietf-poly1305:password123@ss.example.com:8388#FastServer",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.ShadowsocksOutboundOptions)
@@ -323,8 +338,8 @@ func TestParseShadowsocks_ExtendedConfigurations(t *testing.T) {
 			},
 		},
 		{
-			name: "Shadowsocks with aes-128-gcm",
-			link: "ss://aes-128-gcm:testpass@192.168.1.100:8388",
+			name:    "Shadowsocks with aes-128-gcm",
+			link:    "ss://aes-128-gcm:testpass@192.168.1.100:8388",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.ShadowsocksOutboundOptions)
@@ -342,7 +357,7 @@ func TestParseShadowsocks_ExtendedConfigurations(t *testing.T) {
 		{
 			name: "Shadowsocks with special characters in password (base64)",
 			// Base64 is the standard way to handle special chars in SS links
-			link: "ss://" + base64.StdEncoding.EncodeToString([]byte("aes-256-gcm:p@ss:w0rd!")) + "@server:8388",
+			link:    "ss://" + base64.StdEncoding.EncodeToString([]byte("aes-256-gcm:p@ss:w0rd!")) + "@server:8388",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.ShadowsocksOutboundOptions)
@@ -359,8 +374,8 @@ func TestParseShadowsocks_ExtendedConfigurations(t *testing.T) {
 			},
 		},
 		{
-			name: "Shadowsocks with URL-safe base64",
-			link: "ss://" + base64.URLEncoding.EncodeToString([]byte("aes-256-gcm:urlsafe@server:9000")),
+			name:    "Shadowsocks with URL-safe base64",
+			link:    "ss://" + base64.URLEncoding.EncodeToString([]byte("aes-256-gcm:urlsafe@server:9000")),
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.ShadowsocksOutboundOptions)
@@ -376,8 +391,8 @@ func TestParseShadowsocks_ExtendedConfigurations(t *testing.T) {
 			},
 		},
 		{
-			name: "Shadowsocks with 2022-blake3-aes-256-gcm",
-			link: "ss://2022-blake3-aes-256-gcm:modernpass@modern.ss.com:443#Modern",
+			name:    "Shadowsocks with 2022-blake3-aes-256-gcm",
+			link:    "ss://2022-blake3-aes-256-gcm:modernpass@modern.ss.com:443#Modern",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.ShadowsocksOutboundOptions)
@@ -391,7 +406,6 @@ func TestParseShadowsocks_ExtendedConfigurations(t *testing.T) {
 		},
 	}
 
-	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := singerbox.ParseShadowsocks(tt.link)
@@ -415,8 +429,8 @@ func TestParseTrojan_ExtendedConfigurations(t *testing.T) {
 		check   func(*testing.T, option.Outbound)
 	}{
 		{
-			name: "Trojan with gRPC transport",
-			link: "trojan://password@grpc.trojan.com:443?type=grpc&serviceName=TrojanService&sni=grpc.trojan.com#gRPCTrojan",
+			name:    "Trojan with gRPC transport",
+			link:    "trojan://password@grpc.trojan.com:443?type=grpc&serviceName=TrojanService&sni=grpc.trojan.com#gRPCTrojan",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.TrojanOutboundOptions)
@@ -432,8 +446,8 @@ func TestParseTrojan_ExtendedConfigurations(t *testing.T) {
 			},
 		},
 		{
-			name: "Trojan without SNI (should default to server)",
-			link: "trojan://mypass@auto.trojan.com:443",
+			name:    "Trojan without SNI (should default to server)",
+			link:    "trojan://mypass@auto.trojan.com:443",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.TrojanOutboundOptions)
@@ -446,8 +460,8 @@ func TestParseTrojan_ExtendedConfigurations(t *testing.T) {
 			},
 		},
 		{
-			name: "Trojan with complex password",
-			link: "trojan://p@ssw0rd!%23%24@server:443?sni=server.com",
+			name:    "Trojan with complex password",
+			link:    "trojan://p@ssw0rd!%23%24@server:443?sni=server.com",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.TrojanOutboundOptions)
@@ -461,8 +475,8 @@ func TestParseTrojan_ExtendedConfigurations(t *testing.T) {
 			},
 		},
 		{
-			name: "Trojan with WebSocket and custom path",
-			link: "trojan://pass@ws.trojan.net:8443?type=ws&path=/trojan-ws/v1&host=ws.trojan.net&sni=ws.trojan.net",
+			name:    "Trojan with WebSocket and custom path",
+			link:    "trojan://pass@ws.trojan.net:8443?type=ws&path=/trojan-ws/v1&host=ws.trojan.net&sni=ws.trojan.net",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.TrojanOutboundOptions)
@@ -479,7 +493,6 @@ func TestParseTrojan_ExtendedConfigurations(t *testing.T) {
 		},
 	}
 
-	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := singerbox.ParseTrojan(tt.link)
@@ -503,8 +516,8 @@ func TestParseSOCKS_ExtendedConfigurations(t *testing.T) {
 		check   func(*testing.T, option.Outbound)
 	}{
 		{
-			name: "SOCKS5 with special characters in username",
-			link: "socks5://user%40example:pass@server:1080",
+			name:    "SOCKS5 with special characters in username",
+			link:    "socks5://user%40example:pass@server:1080",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.SOCKSOutboundOptions)
@@ -518,8 +531,8 @@ func TestParseSOCKS_ExtendedConfigurations(t *testing.T) {
 			},
 		},
 		{
-			name: "SOCKS5 with IPv6",
-			link: "socks5://user:pass@[::1]:1080",
+			name:    "SOCKS5 with IPv6",
+			link:    "socks5://user:pass@[::1]:1080",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.SOCKSOutboundOptions)
@@ -532,8 +545,8 @@ func TestParseSOCKS_ExtendedConfigurations(t *testing.T) {
 			},
 		},
 		{
-			name: "SOCKS without version prefix",
-			link: "socks://proxy.example.com:1080",
+			name:    "SOCKS without version prefix",
+			link:    "socks://proxy.example.com:1080",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.SOCKSOutboundOptions)
@@ -546,8 +559,8 @@ func TestParseSOCKS_ExtendedConfigurations(t *testing.T) {
 			},
 		},
 		{
-			name: "SOCKS5 on non-standard port",
-			link: "socks5://localhost:9999",
+			name:    "SOCKS5 on non-standard port",
+			link:    "socks5://localhost:9999",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.SOCKSOutboundOptions)
@@ -561,7 +574,6 @@ func TestParseSOCKS_ExtendedConfigurations(t *testing.T) {
 		},
 	}
 
-	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := singerbox.ParseSOCKS(tt.link)
@@ -585,8 +597,8 @@ func TestParseHTTP_ExtendedConfigurations(t *testing.T) {
 		check   func(*testing.T, option.Outbound)
 	}{
 		{
-			name: "HTTP with complex credentials",
-			link: "http://user%40domain:p%40ss@proxy:8080",
+			name:    "HTTP with complex credentials",
+			link:    "http://user%40domain:p%40ss@proxy:8080",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.HTTPOutboundOptions)
@@ -599,8 +611,8 @@ func TestParseHTTP_ExtendedConfigurations(t *testing.T) {
 			},
 		},
 		{
-			name: "HTTPS on non-standard port",
-			link: "https://secure.proxy.com:8443",
+			name:    "HTTPS on non-standard port",
+			link:    "https://secure.proxy.com:8443",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.HTTPOutboundOptions)
@@ -616,8 +628,8 @@ func TestParseHTTP_ExtendedConfigurations(t *testing.T) {
 			},
 		},
 		{
-			name: "HTTP with IPv6",
-			link: "http://[2001:db8::1]:3128",
+			name:    "HTTP with IPv6",
+			link:    "http://[2001:db8::1]:3128",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.HTTPOutboundOptions)
@@ -630,8 +642,8 @@ func TestParseHTTP_ExtendedConfigurations(t *testing.T) {
 			},
 		},
 		{
-			name: "HTTP with default port 80",
-			link: "http://proxy.example.com",
+			name:    "HTTP with default port 80",
+			link:    "http://proxy.example.com",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.HTTPOutboundOptions)
@@ -645,7 +657,6 @@ func TestParseHTTP_ExtendedConfigurations(t *testing.T) {
 		},
 	}
 
-	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := singerbox.ParseHTTP(tt.link)
@@ -663,51 +674,50 @@ func TestParseHTTP_ExtendedConfigurations(t *testing.T) {
 // TestParseRealWorldExamples tests configurations similar to real-world scenarios
 func TestParseRealWorldExamples(t *testing.T) {
 	tests := []struct {
-		name    string
-		link    string
-		wantErr bool
+		name     string
+		link     string
+		wantErr  bool
 		wantType string
 	}{
 		{
-			name: "Common VLESS CDN config",
-			link: "vless://uuid@cdn.example.com:443?type=ws&security=tls&path=/cdn-ws&host=cdn.example.com&sni=cdn.example.com#CDN-Server",
-			wantErr: false,
+			name:     "Common VLESS CDN config",
+			link:     "vless://550e8400-e29b-41d4-a716-446655440000@cdn.example.com:443?type=ws&security=tls&path=/cdn-ws&host=cdn.example.com&sni=cdn.example.com#CDN-Server",
+			wantErr:  false,
 			wantType: "vless",
 		},
 		{
 			name: "VMess with Cloudflare",
 			link: func() string {
-				config := singerbox.VMessConfig{
+				config := vmessExtendedConfig{
 					V: "2", Ps: "CF-Server", Add: "cf.example.com", Port: "443",
-					ID: "uuid", Aid: "0", Net: "ws", Path: "/cfws", TLS: "tls", Host: "cf.example.com",
+					ID: "550e8400-e29b-41d4-a716-446655440000", Aid: "0", Net: "ws", Path: "/cfws", TLS: "tls", Host: "cf.example.com",
 				}
 				j, _ := json.Marshal(config)
 				return "vmess://" + base64.StdEncoding.EncodeToString(j)
 			}(),
-			wantErr: false,
+			wantErr:  false,
 			wantType: "vmess",
 		},
 		{
-			name: "Shadowsocks optimized for mobile",
-			link: "ss://chacha20-ietf-poly1305:mobilepass@mobile.ss.com:443#Mobile-Optimized",
-			wantErr: false,
+			name:     "Shadowsocks optimized for mobile",
+			link:     "ss://chacha20-ietf-poly1305:mobilepass@mobile.ss.com:443#Mobile-Optimized",
+			wantErr:  false,
 			wantType: "shadowsocks",
 		},
 		{
-			name: "Trojan behind CDN",
-			link: "trojan://trojanpass@cdn.trojan.com:443?type=ws&path=/trojan&host=cdn.trojan.com&sni=cdn.trojan.com#CDN-Trojan",
-			wantErr: false,
+			name:     "Trojan behind CDN",
+			link:     "trojan://trojanpass@cdn.trojan.com:443?type=ws&path=/trojan&host=cdn.trojan.com&sni=cdn.trojan.com#CDN-Trojan",
+			wantErr:  false,
 			wantType: "trojan",
 		},
 		{
-			name: "VLESS Reality for censorship bypass",
-			link: "vless://uuid@reality.server.com:443?security=reality&pbk=realitykey123&sid=short&sni=www.microsoft.com&fp=chrome#Reality-Bypass",
-			wantErr: false,
+			name:     "VLESS Reality for censorship bypass",
+			link:     "vless://550e8400-e29b-41d4-a716-446655440000@reality.server.com:443?security=reality&pbk=realitykey123&sid=short&sni=www.microsoft.com&fp=chrome#Reality-Bypass",
+			wantErr:  false,
 			wantType: "vless",
 		},
 	}
 
-	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := singerbox.Parse(tt.link)

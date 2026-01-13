@@ -1,6 +1,7 @@
 package singerbox_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -105,8 +106,8 @@ func TestProxyBox_StartStop(t *testing.T) {
 	// Create a simple SOCKS outbound for testing
 	pb, err := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 		Outbound: option.Outbound{
-			Type: "direct",
-			Tag:  "direct",
+			Type:    "direct",
+			Tag:     "direct",
 			Options: &option.DirectOutboundOptions{},
 		},
 		ListenAddr: "127.0.0.1:19080",
@@ -157,9 +158,76 @@ func TestProxyBox_StartStop(t *testing.T) {
 	}
 }
 
+func TestProxyBox_StartStopContext(t *testing.T) {
+	pb, err := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
+		Outbound: option.Outbound{
+			Type:    "direct",
+			Tag:     "direct",
+			Options: &option.DirectOutboundOptions{},
+		},
+		ListenAddr: "127.0.0.1:19081",
+		LogLevel:   "error",
+	})
+	if err != nil {
+		t.Fatalf("NewProxyBox() error = %v", err)
+	}
+
+	// Test StartContext with valid context
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = pb.StartContext(ctx)
+	if err != nil {
+		t.Fatalf("StartContext() error = %v", err)
+	}
+
+	if !pb.IsRunning() {
+		t.Error("ProxyBox should be running after StartContext()")
+	}
+
+	time.Sleep(100 * time.Millisecond)
+
+	// Test StopContext with valid context
+	stopCtx, stopCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer stopCancel()
+
+	err = pb.StopContext(stopCtx)
+	if err != nil {
+		t.Errorf("StopContext() error = %v", err)
+	}
+
+	if pb.IsRunning() {
+		t.Error("ProxyBox should not be running after StopContext()")
+	}
+}
+
+func TestProxyBox_StartContext_Cancelled(t *testing.T) {
+	pb, err := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
+		Outbound: option.Outbound{
+			Type:    "direct",
+			Tag:     "direct",
+			Options: &option.DirectOutboundOptions{},
+		},
+		ListenAddr: "127.0.0.1:19083",
+		LogLevel:   "error",
+	})
+	if err != nil {
+		t.Fatalf("NewProxyBox() error = %v", err)
+	}
+
+	// Test with already cancelled context
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel immediately
+
+	err = pb.StartContext(ctx)
+	if err == nil {
+		t.Error("StartContext() should fail with cancelled context")
+		pb.Stop()
+	}
+}
+
 func TestProxyBox_WithSharelink(t *testing.T) {
 	// Test integration with sharelink parser
-	
 
 	tests := []struct {
 		name       string
@@ -226,8 +294,8 @@ func TestProxyBox_WithSharelink(t *testing.T) {
 
 func TestProxyBox_Config(t *testing.T) {
 	outbound := option.Outbound{
-		Type: "direct",
-		Tag:  "test-direct",
+		Type:    "direct",
+		Tag:     "test-direct",
 		Options: &option.DirectOutboundOptions{},
 	}
 
@@ -416,7 +484,7 @@ func TestFromSharedLink(t *testing.T) {
 			}
 
 			proxy, err := singerbox.FromSharedLink(tt.link, tt.config)
-			
+
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FromSharedLink() error = %v, wantErr %v", err, tt.wantErr)
 				return

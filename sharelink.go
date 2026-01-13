@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/sagernet/sing-box/option"
@@ -13,9 +14,19 @@ import (
 	"github.com/sagernet/sing/common/json/badoption"
 )
 
+// uuidRegex validates UUID format (with or without dashes)
+var uuidRegex = regexp.MustCompile(`^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$`)
+
+// MaxShareLinkLength is the maximum allowed length for share links (64KB)
+const MaxShareLinkLength = 64 * 1024
+
 // Parse parses a share link and returns a sing-box Outbound configuration
 func Parse(link string) (option.Outbound, error) {
 	link = strings.TrimSpace(link)
+
+	if len(link) > MaxShareLinkLength {
+		return option.Outbound{}, E.New("share link too long (max " + fmt.Sprint(MaxShareLinkLength) + " bytes)")
+	}
 
 	if strings.HasPrefix(link, "vless://") {
 		return ParseVLESS(link)
@@ -46,6 +57,9 @@ func ParseVLESS(link string) (option.Outbound, error) {
 	if uuid == "" {
 		return option.Outbound{}, E.New("missing UUID in VLESS link")
 	}
+	if !uuidRegex.MatchString(uuid) {
+		return option.Outbound{}, E.New("invalid UUID format in VLESS link")
+	}
 
 	server := u.Hostname()
 	if server == "" {
@@ -75,6 +89,11 @@ func ParseVLESS(link string) (option.Outbound, error) {
 		}
 
 		if security == "reality" {
+			pbk := query.Get("pbk")
+			if pbk == "" {
+				return option.Outbound{}, E.New("missing public key (pbk) for Reality in VLESS link")
+			}
+
 			// Reality requires uTLS
 			tlsOpts.UTLS = &option.OutboundUTLSOptions{
 				Enabled:     true,
@@ -82,8 +101,8 @@ func ParseVLESS(link string) (option.Outbound, error) {
 			}
 			tlsOpts.Reality = &option.OutboundRealityOptions{
 				Enabled:   true,
-				PublicKey: query.Get("pbk"),
-				ShortID:   query.Get("sid"),
+				PublicKey: pbk,
+				ShortID:   query.Get("sid"), // sid is optional
 			}
 			// Override fingerprint if specified
 			if fp := query.Get("fp"); fp != "" {
@@ -144,8 +163,8 @@ func ParseVLESS(link string) (option.Outbound, error) {
 	}, nil
 }
 
-// VMessConfig represents VMess JSON configuration
-type VMessConfig struct {
+// vmessConfig represents VMess JSON configuration (internal use only)
+type vmessConfig struct {
 	V    string `json:"v"`
 	Ps   string `json:"ps"`
 	Add  string `json:"add"`
@@ -173,7 +192,7 @@ func ParseVMess(link string) (option.Outbound, error) {
 		}
 	}
 
-	var vmess VMessConfig
+	var vmess vmessConfig
 	if err := json.Unmarshal(decoded, &vmess); err != nil {
 		return option.Outbound{}, E.New("invalid JSON in VMess link: ", err)
 	}
@@ -183,6 +202,9 @@ func ParseVMess(link string) (option.Outbound, error) {
 	}
 	if vmess.ID == "" {
 		return option.Outbound{}, E.New("missing UUID in VMess link")
+	}
+	if !uuidRegex.MatchString(vmess.ID) {
+		return option.Outbound{}, E.New("invalid UUID format in VMess link")
 	}
 
 	port := 443
@@ -256,6 +278,16 @@ func ParseVMess(link string) (option.Outbound, error) {
 // ParseShadowsocks parses a Shadowsocks share link
 // Format: ss://base64encoded or ss://method:password@server:port
 func ParseShadowsocks(link string) (option.Outbound, error) {
+	return parseShadowsocksWithDepth(link, 0)
+}
+
+// parseShadowsocksWithDepth handles recursive decoding with depth limit
+func parseShadowsocksWithDepth(link string, depth int) (option.Outbound, error) {
+	const maxRecursionDepth = 2 // Allow one level of base64 decoding
+	if depth > maxRecursionDepth {
+		return option.Outbound{}, E.New("too many levels of base64 encoding in Shadowsocks link")
+	}
+
 	link = strings.TrimPrefix(link, "ss://")
 
 	var method, password, server string
@@ -291,10 +323,21 @@ func ParseShadowsocks(link string) (option.Outbound, error) {
 			password = methodPass[1]
 		}
 
-		serverParts := strings.Split(serverInfo, ":")
-		server = serverParts[0]
-		if len(serverParts) > 1 {
-			fmt.Sscanf(serverParts[1], "%d", &port)
+		// Handle IPv6 server addresses
+		if strings.HasPrefix(serverInfo, "[") {
+			// IPv6: [::1]:port
+			if idx := strings.LastIndex(serverInfo, "]:"); idx != -1 {
+				server = serverInfo[1:idx]
+				fmt.Sscanf(serverInfo[idx+2:], "%d", &port)
+			} else if strings.HasSuffix(serverInfo, "]") {
+				server = serverInfo[1 : len(serverInfo)-1]
+			}
+		} else {
+			serverParts := strings.Split(serverInfo, ":")
+			server = serverParts[0]
+			if len(serverParts) > 1 {
+				fmt.Sscanf(serverParts[1], "%d", &port)
+			}
 		}
 	} else {
 		// Entire string is base64 encoded
@@ -305,7 +348,7 @@ func ParseShadowsocks(link string) (option.Outbound, error) {
 				return option.Outbound{}, E.New("invalid base64 encoding in Shadowsocks link")
 			}
 		}
-		return ParseShadowsocks("ss://" + string(decoded))
+		return parseShadowsocksWithDepth("ss://"+string(decoded), depth+1)
 	}
 
 	if server == "" {
@@ -313,6 +356,11 @@ func ParseShadowsocks(link string) (option.Outbound, error) {
 	}
 	if method == "" {
 		return option.Outbound{}, E.New("missing method in Shadowsocks link")
+	}
+
+	// Validate port
+	if port < 1 || port > 65535 {
+		port = 8388 // Default Shadowsocks port
 	}
 
 	if tag == "" {
@@ -429,7 +477,7 @@ func ParseSOCKS(link string) (option.Outbound, error) {
 	socksOpts := option.SOCKSOutboundOptions{
 		ServerOptions: option.ServerOptions{
 			Server:     server,
-			ServerPort: uint16(getPort(u.Host)),
+			ServerPort: uint16(getPortWithDefault(u.Host, 1080)),
 		},
 		Version: "5",
 	}
@@ -460,10 +508,16 @@ func ParseHTTP(link string) (option.Outbound, error) {
 		return option.Outbound{}, E.New("missing server in HTTP link")
 	}
 
+	// Default port: 443 for HTTPS, 80 for HTTP
+	defaultPort := 80
+	if u.Scheme == "https" {
+		defaultPort = 443
+	}
+
 	httpOpts := option.HTTPOutboundOptions{
 		ServerOptions: option.ServerOptions{
 			Server:     server,
-			ServerPort: uint16(getPort(u.Host)),
+			ServerPort: uint16(getPortWithDefault(u.Host, defaultPort)),
 		},
 	}
 
@@ -488,14 +542,38 @@ func ParseHTTP(link string) (option.Outbound, error) {
 	}, nil
 }
 
-// getPort extracts port from host:port string, returns 443 as default
-func getPort(hostPort string) int {
+// getPortWithDefault extracts port from host:port string, using specified default
+// Handles IPv6 addresses like [::1]:8080
+func getPortWithDefault(hostPort string, defaultPort int) int {
+	// Handle IPv6 addresses
+	if strings.HasPrefix(hostPort, "[") {
+		// IPv6 format: [::1]:port or [::1]
+		if idx := strings.LastIndex(hostPort, "]:"); idx != -1 {
+			var port int
+			if _, err := fmt.Sscanf(hostPort[idx+2:], "%d", &port); err == nil {
+				if port >= 1 && port <= 65535 {
+					return port
+				}
+			}
+		}
+		return defaultPort
+	}
+
+	// IPv4 or hostname format: host:port
 	parts := strings.Split(hostPort, ":")
 	if len(parts) < 2 {
-		return 443
+		return defaultPort
 	}
-	port := 443
-	fmt.Sscanf(parts[len(parts)-1], "%d", &port)
-	return port
+	var port int
+	if _, err := fmt.Sscanf(parts[len(parts)-1], "%d", &port); err == nil {
+		if port >= 1 && port <= 65535 {
+			return port
+		}
+	}
+	return defaultPort
 }
 
+// getPort extracts port from host:port string, returns 443 as default (for TLS protocols)
+func getPort(hostPort string) int {
+	return getPortWithDefault(hostPort, 443)
+}

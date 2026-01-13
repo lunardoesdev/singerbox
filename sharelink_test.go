@@ -17,8 +17,8 @@ func TestParseVLESS(t *testing.T) {
 		check   func(*testing.T, option.Outbound)
 	}{
 		{
-			name: "VLESS with TLS and WebSocket",
-			link: "vless://a1b2c3d4-e5f6-7890-abcd-ef1234567890@example.com:443?type=ws&security=tls&path=/ws&host=example.com&sni=example.com#TestServer",
+			name:    "VLESS with TLS and WebSocket",
+			link:    "vless://a1b2c3d4-e5f6-7890-abcd-ef1234567890@example.com:443?type=ws&security=tls&path=/ws&host=example.com&sni=example.com#TestServer",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				if out.Type != "vless" {
@@ -49,8 +49,8 @@ func TestParseVLESS(t *testing.T) {
 			},
 		},
 		{
-			name: "VLESS with Reality",
-			link: "vless://550e8400-e29b-41d4-a716-446655440000@reality.example.com:443?security=reality&pbk=testPublicKey123&sid=abcd1234&sni=www.microsoft.com&fp=chrome",
+			name:    "VLESS with Reality",
+			link:    "vless://550e8400-e29b-41d4-a716-446655440000@reality.example.com:443?security=reality&pbk=testPublicKey123&sid=abcd1234&sni=www.microsoft.com&fp=chrome",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.VLESSOutboundOptions)
@@ -78,8 +78,8 @@ func TestParseVLESS(t *testing.T) {
 			},
 		},
 		{
-			name: "VLESS with gRPC",
-			link: "vless://test-uuid@grpc.example.com:443?type=grpc&serviceName=TestService&security=tls&sni=grpc.example.com",
+			name:    "VLESS with gRPC",
+			link:    "vless://550e8400-e29b-41d4-a716-446655440000@grpc.example.com:443?type=grpc&serviceName=TestService&security=tls&sni=grpc.example.com",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.VLESSOutboundOptions)
@@ -101,12 +101,11 @@ func TestParseVLESS(t *testing.T) {
 		},
 		{
 			name:    "VLESS missing server",
-			link:    "vless://uuid@:443",
+			link:    "vless://550e8400-e29b-41d4-a716-446655440000@:443",
 			wantErr: true,
 		},
 	}
 
-	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := singerbox.ParseVLESS(tt.link)
@@ -121,9 +120,26 @@ func TestParseVLESS(t *testing.T) {
 	}
 }
 
+// vmessTestConfig is used for constructing test VMess links
+type vmessTestConfig struct {
+	V    string `json:"v"`
+	Ps   string `json:"ps"`
+	Add  string `json:"add"`
+	Port string `json:"port"`
+	ID   string `json:"id"`
+	Aid  string `json:"aid"`
+	Net  string `json:"net"`
+	Type string `json:"type"`
+	Host string `json:"host"`
+	Path string `json:"path"`
+	TLS  string `json:"tls"`
+	SNI  string `json:"sni"`
+	ALPN string `json:"alpn"`
+}
+
 func TestParseVMess(t *testing.T) {
 	// Create a VMess configuration
-	vmessConfig := singerbox.VMessConfig{
+	vmessConfig := vmessTestConfig{
 		V:    "2",
 		Ps:   "TestVMess",
 		Add:  "vmess.example.com",
@@ -148,8 +164,8 @@ func TestParseVMess(t *testing.T) {
 		check   func(*testing.T, option.Outbound)
 	}{
 		{
-			name: "VMess with WebSocket and TLS",
-			link: "vmess://" + encoded,
+			name:    "VMess with WebSocket and TLS",
+			link:    "vmess://" + encoded,
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				if out.Type != "vmess" {
@@ -188,7 +204,6 @@ func TestParseVMess(t *testing.T) {
 		},
 	}
 
-	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := singerbox.ParseVMess(tt.link)
@@ -211,8 +226,8 @@ func TestParseShadowsocks(t *testing.T) {
 		check   func(*testing.T, option.Outbound)
 	}{
 		{
-			name: "Shadowsocks method:password@server:port",
-			link: "ss://aes-256-gcm:mypassword123@ss.example.com:8388#TestSS",
+			name:    "Shadowsocks method:password@server:port",
+			link:    "ss://aes-256-gcm:mypassword123@ss.example.com:8388#TestSS",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				if out.Type != "shadowsocks" {
@@ -240,8 +255,8 @@ func TestParseShadowsocks(t *testing.T) {
 			},
 		},
 		{
-			name: "Shadowsocks base64 encoded",
-			link: "ss://" + base64.StdEncoding.EncodeToString([]byte("chacha20-poly1305:testpass@192.168.1.1:8388")),
+			name:    "Shadowsocks base64 encoded",
+			link:    "ss://" + base64.StdEncoding.EncodeToString([]byte("chacha20-poly1305:testpass@192.168.1.1:8388")),
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.ShadowsocksOutboundOptions)
@@ -263,7 +278,6 @@ func TestParseShadowsocks(t *testing.T) {
 		},
 	}
 
-	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := singerbox.ParseShadowsocks(tt.link)
@@ -286,8 +300,8 @@ func TestParseTrojan(t *testing.T) {
 		check   func(*testing.T, option.Outbound)
 	}{
 		{
-			name: "Trojan basic",
-			link: "trojan://mypassword@trojan.example.com:443?sni=trojan.example.com#TestTrojan",
+			name:    "Trojan basic",
+			link:    "trojan://mypassword@trojan.example.com:443?sni=trojan.example.com#TestTrojan",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				if out.Type != "trojan" {
@@ -312,8 +326,8 @@ func TestParseTrojan(t *testing.T) {
 			},
 		},
 		{
-			name: "Trojan with WebSocket",
-			link: "trojan://pass123@ws.trojan.com:443?type=ws&path=/trojan&host=ws.trojan.com",
+			name:    "Trojan with WebSocket",
+			link:    "trojan://pass123@ws.trojan.com:443?type=ws&path=/trojan&host=ws.trojan.com",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.TrojanOutboundOptions)
@@ -335,7 +349,6 @@ func TestParseTrojan(t *testing.T) {
 		},
 	}
 
-	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := singerbox.ParseTrojan(tt.link)
@@ -358,8 +371,8 @@ func TestParseSOCKS(t *testing.T) {
 		check   func(*testing.T, option.Outbound)
 	}{
 		{
-			name: "SOCKS5 with auth",
-			link: "socks5://user:pass@socks.example.com:1080",
+			name:    "SOCKS5 with auth",
+			link:    "socks5://user:pass@socks.example.com:1080",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				if out.Type != "socks" {
@@ -384,8 +397,8 @@ func TestParseSOCKS(t *testing.T) {
 			},
 		},
 		{
-			name: "SOCKS5 without auth",
-			link: "socks5://proxy.example.com:1080",
+			name:    "SOCKS5 without auth",
+			link:    "socks5://proxy.example.com:1080",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.SOCKSOutboundOptions)
@@ -407,7 +420,6 @@ func TestParseSOCKS(t *testing.T) {
 		},
 	}
 
-	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := singerbox.ParseSOCKS(tt.link)
@@ -430,8 +442,8 @@ func TestParseHTTP(t *testing.T) {
 		check   func(*testing.T, option.Outbound)
 	}{
 		{
-			name: "HTTP with auth",
-			link: "http://user:pass@proxy.example.com:8080",
+			name:    "HTTP with auth",
+			link:    "http://user:pass@proxy.example.com:8080",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				if out.Type != "http" {
@@ -456,8 +468,8 @@ func TestParseHTTP(t *testing.T) {
 			},
 		},
 		{
-			name: "HTTPS with auth",
-			link: "https://user:pass@secure.example.com:443",
+			name:    "HTTPS with auth",
+			link:    "https://user:pass@secure.example.com:443",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.HTTPOutboundOptions)
@@ -470,8 +482,8 @@ func TestParseHTTP(t *testing.T) {
 			},
 		},
 		{
-			name: "HTTP without auth",
-			link: "http://proxy.example.com:3128",
+			name:    "HTTP without auth",
+			link:    "http://proxy.example.com:3128",
 			wantErr: false,
 			check: func(t *testing.T, out option.Outbound) {
 				opts, ok := out.Options.(*option.HTTPOutboundOptions)
@@ -485,7 +497,6 @@ func TestParseHTTP(t *testing.T) {
 		},
 	}
 
-	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := singerbox.ParseHTTP(tt.link)
@@ -509,13 +520,13 @@ func TestParse(t *testing.T) {
 	}{
 		{
 			name:     "Auto-detect VLESS",
-			link:     "vless://uuid@server:443",
+			link:     "vless://550e8400-e29b-41d4-a716-446655440000@server:443",
 			wantType: "vless",
 			wantErr:  false,
 		},
 		{
 			name:     "Auto-detect VMess",
-			link:     "vmess://" + base64.StdEncoding.EncodeToString([]byte(`{"add":"server","port":"443","id":"uuid","ps":"test"}`)),
+			link:     "vmess://" + base64.StdEncoding.EncodeToString([]byte(`{"add":"server","port":"443","id":"550e8400-e29b-41d4-a716-446655440000","ps":"test"}`)),
 			wantType: "vmess",
 			wantErr:  false,
 		},
@@ -551,7 +562,6 @@ func TestParse(t *testing.T) {
 		},
 	}
 
-	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := singerbox.Parse(tt.link)
@@ -566,10 +576,136 @@ func TestParse(t *testing.T) {
 	}
 }
 
+// Test security limits
+func TestParse_InputSizeLimit(t *testing.T) {
+	// Create a link that exceeds the maximum allowed length
+	oversizedLink := "vless://550e8400-e29b-41d4-a716-446655440000@server:443?" + string(make([]byte, singerbox.MaxShareLinkLength))
+
+	_, err := singerbox.Parse(oversizedLink)
+	if err == nil {
+		t.Error("Parse() should fail for oversized input")
+	}
+}
+
+func TestParseShadowsocks_RecursionLimit(t *testing.T) {
+	// Create a deeply nested base64 encoded link (this would cause stack overflow without limit)
+	// Base case: valid SS link
+	baseLink := "aes-256-gcm:password@server.com:8388"
+
+	// Encode it multiple times
+	encoded := baseLink
+	for i := 0; i < 10; i++ {
+		encoded = base64.StdEncoding.EncodeToString([]byte(encoded))
+	}
+
+	_, err := singerbox.ParseShadowsocks("ss://" + encoded)
+	if err == nil {
+		t.Error("ParseShadowsocks() should fail for deeply nested base64")
+	}
+}
+
+func TestParse_DefaultPorts(t *testing.T) {
+	tests := []struct {
+		name     string
+		link     string
+		wantPort uint16
+	}{
+		{
+			name:     "SOCKS5 default port",
+			link:     "socks5://server.com",
+			wantPort: 1080,
+		},
+		{
+			name:     "HTTP default port",
+			link:     "http://server.com",
+			wantPort: 80,
+		},
+		{
+			name:     "HTTPS default port",
+			link:     "https://server.com",
+			wantPort: 443,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			out, err := singerbox.Parse(tt.link)
+			if err != nil {
+				t.Fatalf("Parse() error = %v", err)
+			}
+
+			var port uint16
+			switch opts := out.Options.(type) {
+			case *option.SOCKSOutboundOptions:
+				port = opts.ServerPort
+			case *option.HTTPOutboundOptions:
+				port = opts.ServerPort
+			default:
+				t.Fatalf("Unexpected options type: %T", out.Options)
+			}
+
+			if port != tt.wantPort {
+				t.Errorf("Port = %d, want %d", port, tt.wantPort)
+			}
+		})
+	}
+}
+
+func TestParse_IPv6Addresses(t *testing.T) {
+	tests := []struct {
+		name       string
+		link       string
+		wantServer string
+		wantPort   uint16
+	}{
+		{
+			name:       "SOCKS5 with IPv6",
+			link:       "socks5://[::1]:9050",
+			wantServer: "::1",
+			wantPort:   9050,
+		},
+		{
+			name:       "HTTP with IPv6",
+			link:       "http://[2001:db8::1]:8080",
+			wantServer: "2001:db8::1",
+			wantPort:   8080,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			out, err := singerbox.Parse(tt.link)
+			if err != nil {
+				t.Fatalf("Parse() error = %v", err)
+			}
+
+			var server string
+			var port uint16
+			switch opts := out.Options.(type) {
+			case *option.SOCKSOutboundOptions:
+				server = opts.Server
+				port = opts.ServerPort
+			case *option.HTTPOutboundOptions:
+				server = opts.Server
+				port = opts.ServerPort
+			default:
+				t.Fatalf("Unexpected options type: %T", out.Options)
+			}
+
+			if server != tt.wantServer {
+				t.Errorf("Server = %s, want %s", server, tt.wantServer)
+			}
+			if port != tt.wantPort {
+				t.Errorf("Port = %d, want %d", port, tt.wantPort)
+			}
+		})
+	}
+}
+
 // Benchmark tests
 func BenchmarkParseVLESS(b *testing.B) {
-	
-	link := "vless://uuid@server:443?type=ws&security=tls&path=/ws"
+
+	link := "vless://550e8400-e29b-41d4-a716-446655440000@server:443?type=ws&security=tls&path=/ws"
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, _ = singerbox.ParseVLESS(link)
@@ -577,8 +713,8 @@ func BenchmarkParseVLESS(b *testing.B) {
 }
 
 func BenchmarkParseVMess(b *testing.B) {
-	
-	config := `{"v":"2","ps":"test","add":"server","port":"443","id":"uuid","aid":"0","net":"ws","type":"none","host":"server","path":"/","tls":"tls"}`
+
+	config := `{"v":"2","ps":"test","add":"server","port":"443","id":"550e8400-e29b-41d4-a716-446655440000","aid":"0","net":"ws","type":"none","host":"server","path":"/","tls":"tls"}`
 	link := "vmess://" + base64.StdEncoding.EncodeToString([]byte(config))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -587,7 +723,7 @@ func BenchmarkParseVMess(b *testing.B) {
 }
 
 func BenchmarkParseShadowsocks(b *testing.B) {
-	
+
 	link := "ss://aes-256-gcm:password@server:8388"
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

@@ -15,7 +15,7 @@
 ```go
 // One-line proxy setup from any share link
 proxy, _ := singerbox.FromSharedLink(
-    "vless://uuid@server:443?security=reality&pbk=key...",
+    "vless://550e8400-e29b-41d4-a716-446655440000@server:443?security=reality&pbk=key...",
     singerbox.ProxyConfig{
         ListenAddr: "127.0.0.1:1080",  // Optional: default is "127.0.0.1:1080"
         LogLevel:   "info",             // Optional: default is "panic" (silent)
@@ -51,12 +51,14 @@ Parse share links from any proxy protocol:
 
 ### 🚀 Manage Proxies Programmatically
 - Start/stop proxy instances with simple API
+- Context-aware methods with timeout/cancellation support
 - Mixed proxy mode supporting both SOCKS5 and HTTP on a single port
 - Run multiple proxy instances simultaneously
 - Full control over configuration
 
 ### 💪 Production Ready
 - **91.8% test coverage** with 70+ test cases
+- Input validation (UUID format, required fields, size limits)
 - Clean, well-documented API
 - Fast and efficient
 - Battle-tested with sing-box
@@ -159,7 +161,7 @@ fmt.Printf("✓ Proxy running on %s\n", proxy.ListenAddr())
 links := []string{
     "ss://aes-256-gcm:pass1@server1.com:8388",
     "trojan://pass2@server2.com:443",
-    "vless://uuid@server3.com:443?security=tls",
+    "vless://550e8400-e29b-41d4-a716-446655440000@server3.com:443?security=tls",
 }
 
 proxies := []*singerbox.ProxyBox{}
@@ -187,8 +189,8 @@ If you just need to parse links (advanced use case):
 
 ```go
 links := []string{
-    "vless://uuid@server:443?security=reality&pbk=key&sid=id",
-    "vmess://eyJ2IjoiMiIsInBzIjoidGVzdCIsImFkZCI6InNlcnZlciJ9",
+    "vless://550e8400-e29b-41d4-a716-446655440000@server:443?security=reality&pbk=key&sid=id",
+    "vmess://eyJ2IjoiMiIsInBzIjoidGVzdCIsImFkZCI6InNlcnZlciIsImlkIjoiNTUwZTg0MDAtZTI5Yi00MWQ0LWE3MTYtNDQ2NjU1NDQwMDAwIn0=",
     "ss://aes-256-gcm:password@server:8388",
 }
 
@@ -206,10 +208,11 @@ for _, link := range links {
 
 ```go
 // Parse VLESS Reality link
-link := "vless://uuid@server:443?" +
+// Note: pbk (public key) is required for Reality, sid (short ID) is optional
+link := "vless://550e8400-e29b-41d4-a716-446655440000@server:443?" +
         "security=reality&" +
-        "pbk=publicKey123&" +
-        "sid=shortID&" +
+        "pbk=publicKey123&" +   // Required for Reality
+        "sid=shortID&" +         // Optional
         "sni=www.example.com&" +
         "fp=firefox"  // uTLS fingerprint
 
@@ -342,7 +345,7 @@ pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 
 ```go
 proxy, err := singerbox.FromSharedLink(
-    "vless://uuid@server:443?security=tls",
+    "vless://550e8400-e29b-41d4-a716-446655440000@server:443?security=tls",
     singerbox.ProxyConfig{
         ListenAddr: "127.0.0.1:1080",  // Optional: defaults to "127.0.0.1:1080"
         LogLevel:   "info",             // Optional: defaults to "panic" (silent)
@@ -375,7 +378,7 @@ Use these if you need to parse share links without starting a proxy:
 Parses any supported share link and returns sing-box outbound config.
 
 ```go
-outbound, err := singerbox.Parse("vless://uuid@server:443?security=tls")
+outbound, err := singerbox.Parse("vless://550e8400-e29b-41d4-a716-446655440000@server:443?security=tls")
 if err != nil {
     // Handle error
 }
@@ -416,12 +419,57 @@ type ProxyBoxConfig struct {
 #### Methods
 
 ```go
+// Basic methods
 Start() error              // Start the proxy
 Stop() error               // Stop the proxy
 IsRunning() bool           // Check if running
 ListenAddr() string        // Get mixed proxy address (supports both SOCKS5 and HTTP)
 Config() option.Options    // Get sing-box config
 Outbound() option.Outbound // Get outbound config
+
+// Context-aware methods (for timeout/cancellation control)
+StartContext(ctx context.Context) error  // Start with context
+StopContext(ctx context.Context) error   // Stop with context
+```
+
+#### Using Context for Timeouts
+
+```go
+import "context"
+
+// Start with a 5-second timeout
+ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+defer cancel()
+
+err := pb.StartContext(ctx)
+if err == context.DeadlineExceeded {
+    fmt.Println("Startup timed out")
+}
+
+// Stop with cancellation support
+stopCtx, stopCancel := context.WithTimeout(context.Background(), 3*time.Second)
+defer stopCancel()
+
+err = pb.StopContext(stopCtx)
+```
+
+### Input Validation
+
+The library validates input to ensure correct configuration:
+
+- **UUID format**: VLESS and VMess UUIDs must be valid UUID format (e.g., `550e8400-e29b-41d4-a716-446655440000`)
+- **Reality public key**: The `pbk` parameter is required when using Reality security
+- **Port range**: Ports must be between 1-65535
+- **Link size**: Share links are limited to 64KB to prevent abuse
+
+```go
+// Invalid UUID will return an error
+_, err := singerbox.Parse("vless://invalid-uuid@server:443")
+// Error: invalid UUID format in VLESS link
+
+// Missing Reality public key will return an error
+_, err := singerbox.Parse("vless://550e8400-e29b-41d4-a716-446655440000@server:443?security=reality")
+// Error: missing public key (pbk) for Reality in VLESS link
 ```
 
 ## 🔧 Command-Line Tool
@@ -433,7 +481,7 @@ A CLI tool is included for quick proxy setup:
 make build-minimal
 
 # Run with any share link
-./proxy-tunnel -link 'vless://uuid@server:443?security=tls&type=ws'
+./proxy-tunnel -link 'vless://550e8400-e29b-41d4-a716-446655440000@server:443?security=tls&type=ws'
 
 # Custom listen address
 ./proxy-tunnel -link 'ss://...' -listen 0.0.0.0:9050
@@ -448,7 +496,7 @@ Options:
   -listen      Mixed proxy listen address (default: 127.0.0.1:1080)
 
 Examples:
-  ./proxy-tunnel -link 'vless://uuid@server:443?type=ws&security=tls'
+  ./proxy-tunnel -link 'vless://550e8400-e29b-41d4-a716-446655440000@server:443?type=ws&security=tls'
   ./proxy-tunnel -link 'ss://method:password@server:8388'
   ./proxy-tunnel -link 'trojan://password@server:443' -listen 0.0.0.0:1080
 ```

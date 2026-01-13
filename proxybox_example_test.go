@@ -249,3 +249,44 @@ func ExampleProxyBox_Config() {
 	// Number of inbounds: 1
 	// Number of outbounds: 3
 }
+
+// ExampleFromSharedLink demonstrates the simplest way to create a proxy
+func ExampleFromSharedLink() {
+	// Create and start proxy from a share link in one call
+	proxy, err := singerbox.FromSharedLink(
+		"ss://aes-256-gcm:password@server.com:8388",
+		singerbox.ProxyConfig{
+			ListenAddr: "127.0.0.1:19200",
+			LogLevel:   "error", // Silent for test
+		},
+	)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return
+	}
+	defer proxy.Stop()
+
+	fmt.Printf("Proxy running: %v\n", proxy.IsRunning())
+	fmt.Printf("Listening on: %s\n", proxy.ListenAddr())
+
+	// Output:
+	// Proxy running: true
+	// Listening on: 127.0.0.1:19200
+}
+
+// ExampleFromSharedLink_minimal demonstrates using default settings
+func ExampleFromSharedLink_minimal() {
+	// Minimal configuration - all defaults
+	proxy, _ := singerbox.FromSharedLink(
+		"ss://aes-256-gcm:password@server.com:8388",
+		singerbox.ProxyConfig{},
+	)
+	defer proxy.Stop()
+
+	fmt.Println("Proxy created with defaults")
+	fmt.Printf("Default address: %s\n", proxy.ListenAddr())
+
+	// Output:
+	// Proxy created with defaults
+	// Default address: 127.0.0.1:1080
+}

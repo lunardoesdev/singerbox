@@ -36,6 +36,45 @@ type ProxyBoxConfig struct {
 	LogLevel string
 }
 
+// ProxyConfig holds configuration for FromSharedLink
+type ProxyConfig struct {
+	// ListenAddr is the address for SOCKS5/HTTP mixed proxy (default: "127.0.0.1:1080")
+	ListenAddr string
+
+	// LogLevel sets the logging level (default: "panic" for silent operation)
+	// Available levels: "trace", "debug", "info", "warn", "error", "fatal", "panic"
+	LogLevel string
+}
+
+// FromSharedLink creates and starts a proxy from a share link in one call.
+// This is the recommended way to quickly set up a proxy.
+// Returns a running ProxyBox instance - call Stop() when done.
+func FromSharedLink(link string, cfg ProxyConfig) (*ProxyBox, error) {
+	// Parse the share link
+	outbound, err := Parse(link)
+	if err != nil {
+		return nil, E.Cause(err, "parse share link")
+	}
+
+	// Create proxy box
+	pb, err := NewProxyBox(ProxyBoxConfig{
+		Outbound:   outbound,
+		ListenAddr: cfg.ListenAddr,
+		LogLevel:   cfg.LogLevel,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Start the proxy
+	err = pb.Start()
+	if err != nil {
+		return nil, err
+	}
+
+	return pb, nil
+}
+
 // New creates a new ProxyBox with the given configuration
 func NewProxyBox(cfg ProxyBoxConfig) (*ProxyBox, error) {
 	// Set defaults

@@ -6,8 +6,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/lunardoesdev/singerbox.svg)](https://pkg.go.dev/github.com/lunardoesdev/singerbox)
 [![Go Report Card](https://goreportcard.com/badge/github.com/lunardoesdev/singerbox)](https://goreportcard.com/report/github.com/lunardoesdev/singerbox)
-[![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
-[![Coverage](https://img.shields.io/badge/coverage-91.8%25-brightgreen.svg)](.)
+[![Coverage](https://img.shields.io/badge/coverage-83.1%25-brightgreen.svg)](.)
 
 </div>
 
@@ -57,7 +56,7 @@ Parse share links from any proxy protocol:
 - Full control over configuration
 
 ### 💪 Production Ready
-- **91.8% test coverage** with 70+ test cases
+- **83% test coverage** with 70+ test cases
 - Input validation (UUID format, required fields, size limits)
 - Clean, well-documented API
 - Fast and efficient
@@ -507,7 +506,7 @@ Examples:
 |----------|--------|----------|
 | **VLESS** | `vless://uuid@server:port?params` | TLS, Reality, WebSocket, gRPC, HTTP/2, XTLS flow |
 | **VMess** | `vmess://base64json` | All transports, TLS, WebSocket, gRPC, HTTP/2 |
-| **Shadowsocks** | `ss://method:pass@server:port` | All ciphers, SIP003 plugins |
+| **Shadowsocks** | `ss://method:pass@server:port` | All ciphers |
 | **Trojan** | `trojan://pass@server:port?params` | TLS, WebSocket, gRPC |
 | **SOCKS5** | `socks5://[user:pass@]server:port` | Authentication, UDP relay |
 | **HTTP/HTTPS** | `http[s]://[user:pass@]server:port` | Basic auth, TLS |
@@ -520,7 +519,7 @@ make test
 
 # Run with coverage
 make test-cover
-# Output: coverage: 91.8% of statements
+# Output: coverage: 83.1% of statements
 
 # Run specific tests
 go test -v -run TestParseVLESS
@@ -576,7 +575,7 @@ go build -tags "with_utls" your-app.go
 
 ## 📋 Requirements
 
-- Go 1.21 or higher
+- Go 1.23 or higher
 - sing-box (automatically installed via go modules)
 
 ## 🤝 Contributing

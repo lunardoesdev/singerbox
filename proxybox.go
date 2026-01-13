@@ -118,7 +118,14 @@ func (pb *ProxyBox) StartContext(ctx context.Context) error {
 		return E.New("proxy box already started")
 	}
 
-	// Check for context cancellation before starting
+	// Check if internal context was cancelled (e.g., after Stop was called)
+	select {
+	case <-pb.ctx.Done():
+		return E.New("proxy box context was cancelled, create a new instance")
+	default:
+	}
+
+	// Check for caller context cancellation before starting
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -141,11 +148,13 @@ func (pb *ProxyBox) StartContext(ctx context.Context) error {
 
 	select {
 	case <-ctx.Done():
-		// Context cancelled, try to close the instance
+		// Context cancelled, close the instance
 		instance.Close()
 		return ctx.Err()
 	case err := <-done:
 		if err != nil {
+			// Start failed, close the instance to clean up resources
+			instance.Close()
 			return E.Cause(err, "start sing-box")
 		}
 	}
@@ -232,8 +241,8 @@ func (pb *ProxyBox) ListenAddr() string {
 
 // createConfig creates a sing-box configuration from the given config
 func createConfig(cfg ProxyBoxConfig) (option.Options, error) {
-	// Parse listen address
-	host := strings.Split(cfg.ListenAddr, ":")[0]
+	// Parse listen address - handle IPv6 format [::1]:port
+	host := parseListenHost(cfg.ListenAddr)
 	listenIP, err := netip.ParseAddr(host)
 	if err != nil {
 		listenIP = netip.MustParseAddr("127.0.0.1")
@@ -287,6 +296,23 @@ func createConfig(cfg ProxyBoxConfig) (option.Options, error) {
 			AutoDetectInterface: true,
 		},
 	}, nil
+}
+
+// parseListenHost extracts the host from a listen address string
+// Handles IPv6 format [::1]:port and IPv4 format host:port
+func parseListenHost(listenAddr string) string {
+	// Handle IPv6: [::1]:port or [::1]
+	if strings.HasPrefix(listenAddr, "[") {
+		if idx := strings.Index(listenAddr, "]"); idx != -1 {
+			return listenAddr[1:idx]
+		}
+		return "127.0.0.1" // Malformed, use default
+	}
+	// Handle IPv4/hostname: host:port
+	if idx := strings.LastIndex(listenAddr, ":"); idx != -1 {
+		return listenAddr[:idx]
+	}
+	return listenAddr
 }
 
 // getPortOrDefault extracts port from host:port string, using defaultPort if not found

@@ -20,12 +20,41 @@ var uuidRegex = regexp.MustCompile(`^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]
 // MaxShareLinkLength is the maximum allowed length for share links (64KB)
 const MaxShareLinkLength = 64 * 1024
 
+// validateLinkLength checks if link exceeds maximum allowed length
+func validateLinkLength(link string) error {
+	if len(link) > MaxShareLinkLength {
+		return E.New("share link too long (max " + fmt.Sprint(MaxShareLinkLength) + " bytes)")
+	}
+	return nil
+}
+
+// decodeBase64 tries multiple base64 encodings (standard, URL-safe, with/without padding)
+func decodeBase64(s string) ([]byte, error) {
+	// Try standard encoding with padding
+	if decoded, err := base64.StdEncoding.DecodeString(s); err == nil {
+		return decoded, nil
+	}
+	// Try standard encoding without padding
+	if decoded, err := base64.RawStdEncoding.DecodeString(s); err == nil {
+		return decoded, nil
+	}
+	// Try URL-safe encoding with padding
+	if decoded, err := base64.URLEncoding.DecodeString(s); err == nil {
+		return decoded, nil
+	}
+	// Try URL-safe encoding without padding
+	if decoded, err := base64.RawURLEncoding.DecodeString(s); err == nil {
+		return decoded, nil
+	}
+	return nil, E.New("invalid base64 encoding")
+}
+
 // Parse parses a share link and returns a sing-box Outbound configuration
 func Parse(link string) (option.Outbound, error) {
 	link = strings.TrimSpace(link)
 
-	if len(link) > MaxShareLinkLength {
-		return option.Outbound{}, E.New("share link too long (max " + fmt.Sprint(MaxShareLinkLength) + " bytes)")
+	if err := validateLinkLength(link); err != nil {
+		return option.Outbound{}, err
 	}
 
 	if strings.HasPrefix(link, "vless://") {
@@ -48,6 +77,10 @@ func Parse(link string) (option.Outbound, error) {
 // ParseVLESS parses a VLESS share link
 // Format: vless://uuid@server:port?params#name
 func ParseVLESS(link string) (option.Outbound, error) {
+	if err := validateLinkLength(link); err != nil {
+		return option.Outbound{}, err
+	}
+
 	u, err := url.Parse(link)
 	if err != nil {
 		return option.Outbound{}, err
@@ -83,9 +116,13 @@ func ParseVLESS(link string) (option.Outbound, error) {
 
 	// TLS configuration
 	if security == "tls" || security == "reality" {
+		sni := query.Get("sni")
+		if sni == "" {
+			sni = server // Default SNI to server hostname
+		}
 		tlsOpts := &option.OutboundTLSOptions{
 			Enabled:    true,
-			ServerName: query.Get("sni"),
+			ServerName: sni,
 		}
 
 		if security == "reality" {
@@ -183,6 +220,10 @@ type vmessConfig struct {
 // ParseVMess parses a VMess share link
 // Format: vmess://base64encoded
 func ParseVMess(link string) (option.Outbound, error) {
+	if err := validateLinkLength(link); err != nil {
+		return option.Outbound{}, err
+	}
+
 	encoded := strings.TrimPrefix(link, "vmess://")
 	decoded, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
@@ -278,12 +319,15 @@ func ParseVMess(link string) (option.Outbound, error) {
 // ParseShadowsocks parses a Shadowsocks share link
 // Format: ss://base64encoded or ss://method:password@server:port
 func ParseShadowsocks(link string) (option.Outbound, error) {
+	if err := validateLinkLength(link); err != nil {
+		return option.Outbound{}, err
+	}
 	return parseShadowsocksWithDepth(link, 0)
 }
 
 // parseShadowsocksWithDepth handles recursive decoding with depth limit
 func parseShadowsocksWithDepth(link string, depth int) (option.Outbound, error) {
-	const maxRecursionDepth = 2 // Allow one level of base64 decoding
+	const maxRecursionDepth = 1 // Allow one level of base64 decoding (depth 0 -> 1)
 	if depth > maxRecursionDepth {
 		return option.Outbound{}, E.New("too many levels of base64 encoding in Shadowsocks link")
 	}
@@ -301,21 +345,18 @@ func parseShadowsocksWithDepth(link string, depth int) (option.Outbound, error) 
 	}
 
 	if strings.Contains(link, "@") {
-		parts := strings.Split(link, "@")
-		userInfo := parts[0]
-		serverInfo := parts[1]
+		// Use LastIndex to handle passwords containing @
+		atIdx := strings.LastIndex(link, "@")
+		userInfo := link[:atIdx]
+		serverInfo := link[atIdx+1:]
 
-		// Decode userinfo if base64
-		decoded, err := base64.StdEncoding.DecodeString(userInfo)
-		if err == nil {
+		// Try to decode userinfo as base64 (various encodings)
+		decoded, err := decodeBase64(userInfo)
+		if err == nil && strings.Contains(string(decoded), ":") {
+			// Successfully decoded and looks like method:password
 			userInfo = string(decoded)
-		} else {
-			// Try URL decoding
-			decoded, err = base64.URLEncoding.DecodeString(userInfo)
-			if err == nil {
-				userInfo = string(decoded)
-			}
 		}
+		// If decode failed or doesn't contain ":", use as-is (plain text format)
 
 		methodPass := strings.SplitN(userInfo, ":", 2)
 		method = methodPass[0]
@@ -384,6 +425,10 @@ func parseShadowsocksWithDepth(link string, depth int) (option.Outbound, error) 
 // ParseTrojan parses a Trojan share link
 // Format: trojan://password@server:port?params#name
 func ParseTrojan(link string) (option.Outbound, error) {
+	if err := validateLinkLength(link); err != nil {
+		return option.Outbound{}, err
+	}
+
 	u, err := url.Parse(link)
 	if err != nil {
 		return option.Outbound{}, err
@@ -459,8 +504,12 @@ func ParseTrojan(link string) (option.Outbound, error) {
 }
 
 // ParseSOCKS parses a SOCKS5 share link
-// Format: socks5://[user:pass@]server:port
+// Format: socks5://[user:pass@]server:port[#name]
 func ParseSOCKS(link string) (option.Outbound, error) {
+	if err := validateLinkLength(link); err != nil {
+		return option.Outbound{}, err
+	}
+
 	link = strings.TrimPrefix(link, "socks5://")
 	link = strings.TrimPrefix(link, "socks://")
 
@@ -488,16 +537,25 @@ func ParseSOCKS(link string) (option.Outbound, error) {
 		socksOpts.Password = password
 	}
 
+	tag := "proxy"
+	if u.Fragment != "" {
+		tag = u.Fragment
+	}
+
 	return option.Outbound{
 		Type:    "socks",
-		Tag:     "proxy",
+		Tag:     tag,
 		Options: &socksOpts,
 	}, nil
 }
 
 // ParseHTTP parses an HTTP/HTTPS proxy share link
-// Format: http://[user:pass@]server:port or https://[user:pass@]server:port
+// Format: http://[user:pass@]server:port[#name] or https://[user:pass@]server:port[#name]
 func ParseHTTP(link string) (option.Outbound, error) {
+	if err := validateLinkLength(link); err != nil {
+		return option.Outbound{}, err
+	}
+
 	u, err := url.Parse(link)
 	if err != nil {
 		return option.Outbound{}, err
@@ -535,9 +593,14 @@ func ParseHTTP(link string) (option.Outbound, error) {
 		}
 	}
 
+	tag := "proxy"
+	if u.Fragment != "" {
+		tag = u.Fragment
+	}
+
 	return option.Outbound{
 		Type:    "http",
-		Tag:     "proxy",
+		Tag:     tag,
 		Options: &httpOpts,
 	}, nil
 }

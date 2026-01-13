@@ -351,3 +351,127 @@ func TestProxyBox_MultipleInstances(t *testing.T) {
 		t.Error("pb2 should be running")
 	}
 }
+
+func TestFromSharedLink(t *testing.T) {
+	tests := []struct {
+		name       string
+		link       string
+		config     singerbox.ProxyConfig
+		wantErr    bool
+		shouldSkip bool
+		skipReason string
+	}{
+		{
+			name: "Valid shadowsocks link with defaults",
+			link: "ss://aes-256-gcm:password@server.com:8388",
+			config: singerbox.ProxyConfig{
+				ListenAddr: "127.0.0.1:19200",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Valid link with custom settings",
+			link: "ss://aes-256-gcm:password@server.com:8388",
+			config: singerbox.ProxyConfig{
+				ListenAddr: "127.0.0.1:19201",
+				LogLevel:   "error",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Valid link with empty config (all defaults)",
+			link: "ss://aes-256-gcm:password@server.com:8388",
+			config: singerbox.ProxyConfig{
+				ListenAddr: "127.0.0.1:19202", // Set to avoid port conflict
+			},
+			wantErr: false,
+		},
+		{
+			name: "SOCKS5 proxy",
+			link: "socks5://127.0.0.1:1080",
+			config: singerbox.ProxyConfig{
+				ListenAddr: "127.0.0.1:19203",
+			},
+			wantErr: false,
+		},
+		{
+			name:    "Invalid link",
+			link:    "invalid://malformed",
+			config:  singerbox.ProxyConfig{},
+			wantErr: true,
+		},
+		{
+			name:       "VLESS with TLS (requires network)",
+			link:       "vless://550e8400-e29b-41d4-a716-446655440000@example.com:443?security=tls",
+			config:     singerbox.ProxyConfig{ListenAddr: "127.0.0.1:19204"},
+			shouldSkip: true,
+			skipReason: "Requires network connection",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldSkip {
+				t.Skip(tt.skipReason)
+			}
+
+			proxy, err := singerbox.FromSharedLink(tt.link, tt.config)
+			
+			if (err != nil) != tt.wantErr {
+				t.Errorf("FromSharedLink() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if tt.wantErr {
+				return
+			}
+
+			// Verify proxy is running
+			if !proxy.IsRunning() {
+				t.Error("Proxy should be running after FromSharedLink()")
+			}
+
+			// Verify listen address
+			if proxy.ListenAddr() == "" {
+				t.Error("ListenAddr() should not be empty")
+			}
+
+			// Verify proxy can be stopped
+			err = proxy.Stop()
+			if err != nil {
+				t.Errorf("Stop() error = %v", err)
+			}
+
+			if proxy.IsRunning() {
+				t.Error("Proxy should not be running after Stop()")
+			}
+		})
+	}
+}
+
+func TestFromSharedLink_PortConflict(t *testing.T) {
+	// Create first proxy
+	proxy1, err := singerbox.FromSharedLink(
+		"ss://aes-256-gcm:password@server.com:8388",
+		singerbox.ProxyConfig{
+			ListenAddr: "127.0.0.1:19210",
+			LogLevel:   "error",
+		},
+	)
+	if err != nil {
+		t.Fatalf("Failed to create first proxy: %v", err)
+	}
+	defer proxy1.Stop()
+
+	// Try to create second proxy on same port (should fail)
+	_, err = singerbox.FromSharedLink(
+		"ss://aes-256-gcm:password@server.com:8388",
+		singerbox.ProxyConfig{
+			ListenAddr: "127.0.0.1:19210", // Same port
+			LogLevel:   "error",
+		},
+	)
+	if err == nil {
+		t.Error("FromSharedLink() should fail when port is already in use")
+	}
+}

@@ -14,37 +14,45 @@ import (
 )
 
 // Parser handles parsing of various proxy share link formats
+// Deprecated: Use package-level Parse function instead
 type Parser struct{}
 
-// New creates a new Parser instance
+// NewParser creates a new Parser instance
+// Deprecated: Use package-level Parse function instead
 func NewParser() *Parser {
 	return &Parser{}
 }
 
 // Parse parses a share link and returns a sing-box Outbound configuration
-func (p *Parser) Parse(link string) (option.Outbound, error) {
+func Parse(link string) (option.Outbound, error) {
 	link = strings.TrimSpace(link)
 
 	if strings.HasPrefix(link, "vless://") {
-		return p.ParseVLESS(link)
+		return ParseVLESS(link)
 	} else if strings.HasPrefix(link, "vmess://") {
-		return p.ParseVMess(link)
+		return ParseVMess(link)
 	} else if strings.HasPrefix(link, "ss://") {
-		return p.ParseShadowsocks(link)
+		return ParseShadowsocks(link)
 	} else if strings.HasPrefix(link, "trojan://") {
-		return p.ParseTrojan(link)
+		return ParseTrojan(link)
 	} else if strings.HasPrefix(link, "socks://") || strings.HasPrefix(link, "socks5://") {
-		return p.ParseSOCKS(link)
+		return ParseSOCKS(link)
 	} else if strings.HasPrefix(link, "http://") || strings.HasPrefix(link, "https://") {
-		return p.ParseHTTP(link)
+		return ParseHTTP(link)
 	}
 
 	return option.Outbound{}, E.New("unsupported protocol: " + strings.Split(link, "://")[0])
 }
 
+// Parse method for backwards compatibility
+// Deprecated: Use package-level Parse function instead
+func (p *Parser) Parse(link string) (option.Outbound, error) {
+	return Parse(link)
+}
+
 // ParseVLESS parses a VLESS share link
 // Format: vless://uuid@server:port?params#name
-func (p *Parser) ParseVLESS(link string) (option.Outbound, error) {
+func ParseVLESS(link string) (option.Outbound, error) {
 	u, err := url.Parse(link)
 	if err != nil {
 		return option.Outbound{}, err
@@ -171,7 +179,7 @@ type VMessConfig struct {
 
 // ParseVMess parses a VMess share link
 // Format: vmess://base64encoded
-func (p *Parser) ParseVMess(link string) (option.Outbound, error) {
+func ParseVMess(link string) (option.Outbound, error) {
 	encoded := strings.TrimPrefix(link, "vmess://")
 	decoded, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
@@ -263,7 +271,7 @@ func (p *Parser) ParseVMess(link string) (option.Outbound, error) {
 
 // ParseShadowsocks parses a Shadowsocks share link
 // Format: ss://base64encoded or ss://method:password@server:port
-func (p *Parser) ParseShadowsocks(link string) (option.Outbound, error) {
+func ParseShadowsocks(link string) (option.Outbound, error) {
 	link = strings.TrimPrefix(link, "ss://")
 
 	var method, password, server string
@@ -313,7 +321,7 @@ func (p *Parser) ParseShadowsocks(link string) (option.Outbound, error) {
 				return option.Outbound{}, E.New("invalid base64 encoding in Shadowsocks link")
 			}
 		}
-		return p.ParseShadowsocks("ss://" + string(decoded))
+		return ParseShadowsocks("ss://" + string(decoded))
 	}
 
 	if server == "" {
@@ -343,7 +351,7 @@ func (p *Parser) ParseShadowsocks(link string) (option.Outbound, error) {
 
 // ParseTrojan parses a Trojan share link
 // Format: trojan://password@server:port?params#name
-func (p *Parser) ParseTrojan(link string) (option.Outbound, error) {
+func ParseTrojan(link string) (option.Outbound, error) {
 	u, err := url.Parse(link)
 	if err != nil {
 		return option.Outbound{}, err
@@ -420,7 +428,7 @@ func (p *Parser) ParseTrojan(link string) (option.Outbound, error) {
 
 // ParseSOCKS parses a SOCKS5 share link
 // Format: socks5://[user:pass@]server:port
-func (p *Parser) ParseSOCKS(link string) (option.Outbound, error) {
+func ParseSOCKS(link string) (option.Outbound, error) {
 	link = strings.TrimPrefix(link, "socks5://")
 	link = strings.TrimPrefix(link, "socks://")
 
@@ -457,7 +465,7 @@ func (p *Parser) ParseSOCKS(link string) (option.Outbound, error) {
 
 // ParseHTTP parses an HTTP/HTTPS proxy share link
 // Format: http://[user:pass@]server:port or https://[user:pass@]server:port
-func (p *Parser) ParseHTTP(link string) (option.Outbound, error) {
+func ParseHTTP(link string) (option.Outbound, error) {
 	u, err := url.Parse(link)
 	if err != nil {
 		return option.Outbound{}, err
@@ -505,4 +513,42 @@ func getPort(hostPort string) int {
 	port := 443
 	fmt.Sscanf(parts[len(parts)-1], "%d", &port)
 	return port
+}
+
+// Backwards compatibility methods - delegate to package-level functions
+
+// ParseVLESS parses a VLESS share link
+// Deprecated: Use package-level ParseVLESS function instead
+func (p *Parser) ParseVLESS(link string) (option.Outbound, error) {
+	return ParseVLESS(link)
+}
+
+// ParseVMess parses a VMess share link
+// Deprecated: Use package-level ParseVMess function instead
+func (p *Parser) ParseVMess(link string) (option.Outbound, error) {
+	return ParseVMess(link)
+}
+
+// ParseShadowsocks parses a Shadowsocks share link
+// Deprecated: Use package-level ParseShadowsocks function instead
+func (p *Parser) ParseShadowsocks(link string) (option.Outbound, error) {
+	return ParseShadowsocks(link)
+}
+
+// ParseTrojan parses a Trojan share link
+// Deprecated: Use package-level ParseTrojan function instead
+func (p *Parser) ParseTrojan(link string) (option.Outbound, error) {
+	return ParseTrojan(link)
+}
+
+// ParseSOCKS parses a SOCKS share link
+// Deprecated: Use package-level ParseSOCKS function instead
+func (p *Parser) ParseSOCKS(link string) (option.Outbound, error) {
+	return ParseSOCKS(link)
+}
+
+// ParseHTTP parses an HTTP share link
+// Deprecated: Use package-level ParseHTTP function instead
+func (p *Parser) ParseHTTP(link string) (option.Outbound, error) {
+	return ParseHTTP(link)
 }

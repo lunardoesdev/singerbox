@@ -14,8 +14,7 @@ import (
 )
 
 func main() {
-	// Create proxy with direct outbound
-	fmt.Println("Creating proxy...")
+	fmt.Println("Creating proxy with direct outbound...")
 	pb, err := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
 		Outbound: option.Outbound{
 			Type:    "direct",

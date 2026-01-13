@@ -12,9 +12,8 @@
 </div>
 
 
-```
-parser := singerbox.NewParser()
-outbound, _ := parser.Parse("vless://uuid@server:443?security=reality&pbk=key...")
+```go
+outbound, _ := singerbox.Parse("vless://uuid@server:443?security=reality&pbk=key...")
 pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
     Outbound:   outbound,
     ListenAddr: "127.0.0.1:1080",
@@ -78,12 +77,10 @@ import (
 )
 
 func main() {
-    // Create parser
-    parser := singerbox.NewParser()
 
     // Parse any share link
     link := "vless://550e8400-e29b-41d4-a716-446655440000@example.com:443?type=ws&security=tls"
-    outbound, err := parser.Parse(link)
+    outbound, err := singerbox.Parse(link)
     if err != nil {
         panic(err)
     }
@@ -107,8 +104,7 @@ import (
 
 func main() {
     // Parse the share link (replace with your actual proxy server)
-    parser := singerbox.NewParser()
-    outbound, _ := parser.Parse("ss://aes-256-gcm:mypassword@your-server.com:8388")
+    outbound, _ := singerbox.Parse("ss://aes-256-gcm:mypassword@your-server.com:8388")
 
     // Create and start the proxy on custom port
     pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
@@ -137,7 +133,6 @@ func main() {
 ### Parse Multiple Proxy Types
 
 ```go
-parser := singerbox.NewParser()
 
 links := []string{
     "vless://uuid@server:443?security=reality&pbk=key&sid=id",
@@ -148,7 +143,7 @@ links := []string{
 }
 
 for _, link := range links {
-    outbound, err := parser.Parse(link)
+    outbound, err := singerbox.Parse(link)
     if err != nil {
         fmt.Printf("❌ Failed to parse: %v\n", err)
         continue
@@ -168,8 +163,7 @@ link := "vless://uuid@server:443?" +
         "sni=www.example.com&" +
         "fp=firefox"  // uTLS fingerprint
 
-parser := singerbox.NewParser()
-outbound, _ := parser.Parse(link)
+outbound, _ := singerbox.Parse(link)
 
 // Start proxy with Reality support
 pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
@@ -186,11 +180,10 @@ fmt.Println("✓ Reality protocol active with uTLS!")
 ### Multiple Proxy Instances
 
 ```go
-parser := singerbox.NewParser()
 
 // Parse two different proxies
-shadowsocks, _ := parser.Parse("ss://aes-256-gcm:pass1@server1:8388")
-trojan, _ := parser.Parse("trojan://pass2@server2:443")
+shadowsocks, _ := singerbox.Parse("ss://aes-256-gcm:pass1@server1:8388")
+trojan, _ := singerbox.Parse("trojan://pass2@server2:443")
 
 // Start first proxy
 proxy1, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
@@ -218,10 +211,9 @@ defer proxy2.Stop()
 ### Error Handling
 
 ```go
-parser := singerbox.NewParser()
 
 // Parse with error handling
-outbound, err := parser.Parse("vless://invalid-link")
+outbound, err := singerbox.Parse("vless://invalid-link")
 if err != nil {
     fmt.Printf("Parse failed: %v\n", err)
     return
@@ -271,28 +263,26 @@ fmt.Printf("  Mixed (SOCKS5/HTTP): YOUR_IP:9050\n")
 
 ### Parser API
 
-#### `NewParser() *Parser`
-Creates a new share link parser.
-
-```go
-parser := singerbox.NewParser()
-```
-
 #### `Parse(link string) (option.Outbound, error)`
 Parses any supported share link and returns sing-box outbound config.
 
 ```go
-outbound, err := parser.Parse("vless://...")
+outbound, err := singerbox.Parse("vless://uuid@server:443?security=tls")
+if err != nil {
+    // Handle error
+}
 ```
 
-#### Protocol-Specific Methods
+#### Protocol-Specific Functions
+You can also parse specific protocols directly:
+
 ```go
-ParseVLESS(link string) (option.Outbound, error)
-ParseVMess(link string) (option.Outbound, error)
-ParseShadowsocks(link string) (option.Outbound, error)
-ParseTrojan(link string) (option.Outbound, error)
-ParseSOCKS(link string) (option.Outbound, error)
-ParseHTTP(link string) (option.Outbound, error)
+singerbox.ParseVLESS(link string) (option.Outbound, error)
+singerbox.ParseVMess(link string) (option.Outbound, error)
+singerbox.ParseShadowsocks(link string) (option.Outbound, error)
+singerbox.ParseTrojan(link string) (option.Outbound, error)
+singerbox.ParseSOCKS(link string) (option.Outbound, error)
+singerbox.ParseHTTP(link string) (option.Outbound, error)
 ```
 
 ### ProxyBox API

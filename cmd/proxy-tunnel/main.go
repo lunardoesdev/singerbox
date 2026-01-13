@@ -26,9 +26,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Parse share link using the library
-	parser := singerbox.NewParser()
-	outbound, err := parser.Parse(*shareLink)
+	// Parse share link
+	outbound, err := singerbox.Parse(*shareLink)
 	if err != nil {
 		fmt.Printf("Error parsing share link: %v\n", err)
 		os.Exit(1)

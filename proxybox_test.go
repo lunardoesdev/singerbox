@@ -159,7 +159,7 @@ func TestProxyBox_StartStop(t *testing.T) {
 
 func TestProxyBox_WithSharelink(t *testing.T) {
 	// Test integration with sharelink parser
-	parser := singerbox.NewParser()
+	
 
 	tests := []struct {
 		name       string
@@ -193,7 +193,7 @@ func TestProxyBox_WithSharelink(t *testing.T) {
 				t.Skip(tt.skipReason)
 			}
 
-			outbound, err := parser.Parse(tt.link)
+			outbound, err := singerbox.Parse(tt.link)
 			if err != nil {
 				t.Fatalf("Failed to parse link: %v", err)
 			}

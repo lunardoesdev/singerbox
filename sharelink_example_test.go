@@ -9,12 +9,12 @@ import (
 )
 
 // Example demonstrates basic usage of the sharelink parser
-func ExampleParser() {
-	parser := singerbox.NewParser()
+func Example_parse() {
+	
 
 	// Parse a VLESS link
 	link := "vless://uuid@example.com:443?type=ws&security=tls&path=/ws#MyProxy"
-	outbound, err := parser.Parse(link)
+	outbound, err := singerbox.Parse(link)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
@@ -28,11 +28,11 @@ func ExampleParser() {
 }
 
 // ExampleParser_ParseVLESS demonstrates VLESS parsing
-func ExampleParser_ParseVLESS() {
-	parser := singerbox.NewParser()
+func Example_parseVLESS() {
+	
 
 	link := "vless://a1b2c3d4-e5f6-7890-abcd-ef1234567890@server.example.com:443?type=ws&security=tls&path=/vless&sni=server.example.com#TestServer"
-	outbound, err := parser.ParseVLESS(link)
+	outbound, err := singerbox.ParseVLESS(link)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
@@ -46,11 +46,11 @@ func ExampleParser_ParseVLESS() {
 }
 
 // ExampleParser_ParseVLESS_reality demonstrates VLESS with Reality
-func ExampleParser_ParseVLESS_reality() {
-	parser := singerbox.NewParser()
+func Example_parseVLESS_reality() {
+	
 
 	link := "vless://uuid@server:443?security=reality&pbk=publicKey&sid=shortID&sni=www.example.com&fp=chrome"
-	outbound, err := parser.ParseVLESS(link)
+	outbound, err := singerbox.ParseVLESS(link)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
@@ -66,8 +66,8 @@ func ExampleParser_ParseVLESS_reality() {
 }
 
 // ExampleParser_ParseVMess demonstrates VMess parsing
-func ExampleParser_ParseVMess() {
-	parser := singerbox.NewParser()
+func Example_parseVMess() {
+	
 
 	// Create VMess config
 	config := singerbox.VMessConfig{
@@ -86,7 +86,7 @@ func ExampleParser_ParseVMess() {
 	encoded := base64.StdEncoding.EncodeToString(configJSON)
 	link := "vmess://" + encoded
 
-	outbound, err := parser.ParseVMess(link)
+	outbound, err := singerbox.ParseVMess(link)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
@@ -100,11 +100,11 @@ func ExampleParser_ParseVMess() {
 }
 
 // ExampleParser_ParseShadowsocks demonstrates Shadowsocks parsing
-func ExampleParser_ParseShadowsocks() {
-	parser := singerbox.NewParser()
+func Example_parseShadowsocks() {
+	
 
 	link := "ss://aes-256-gcm:mypassword@ss.example.com:8388#MySSProxy"
-	outbound, err := parser.ParseShadowsocks(link)
+	outbound, err := singerbox.ParseShadowsocks(link)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
@@ -118,11 +118,11 @@ func ExampleParser_ParseShadowsocks() {
 }
 
 // ExampleParser_ParseTrojan demonstrates Trojan parsing
-func ExampleParser_ParseTrojan() {
-	parser := singerbox.NewParser()
+func Example_parseTrojan() {
+	
 
 	link := "trojan://mypassword@trojan.example.com:443?sni=trojan.example.com#TrojanProxy"
-	outbound, err := parser.ParseTrojan(link)
+	outbound, err := singerbox.ParseTrojan(link)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
@@ -136,11 +136,11 @@ func ExampleParser_ParseTrojan() {
 }
 
 // ExampleParser_ParseSOCKS demonstrates SOCKS5 parsing
-func ExampleParser_ParseSOCKS() {
-	parser := singerbox.NewParser()
+func Example_parseSOCKS() {
+	
 
 	link := "socks5://user:pass@proxy.example.com:1080"
-	outbound, err := parser.ParseSOCKS(link)
+	outbound, err := singerbox.ParseSOCKS(link)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
@@ -152,11 +152,11 @@ func ExampleParser_ParseSOCKS() {
 }
 
 // ExampleParser_ParseHTTP demonstrates HTTP proxy parsing
-func ExampleParser_ParseHTTP() {
-	parser := singerbox.NewParser()
+func Example_parseHTTP() {
+	
 
 	link := "https://user:pass@secure.proxy.com:8080"
-	outbound, err := parser.ParseHTTP(link)
+	outbound, err := singerbox.ParseHTTP(link)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
@@ -170,8 +170,8 @@ func ExampleParser_ParseHTTP() {
 }
 
 // ExampleParser_Parse_autoDetect demonstrates auto-detection
-func ExampleParser_Parse_autoDetect() {
-	parser := singerbox.NewParser()
+func Example_parse_autoDetect() {
+	
 
 	links := []string{
 		"vless://uuid@server:443",
@@ -180,7 +180,7 @@ func ExampleParser_Parse_autoDetect() {
 	}
 
 	for _, link := range links {
-		outbound, err := parser.Parse(link)
+		outbound, err := singerbox.Parse(link)
 		if err != nil {
 			fmt.Printf("Error parsing %s\n", link)
 			continue

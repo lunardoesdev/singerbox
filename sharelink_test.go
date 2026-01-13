@@ -106,10 +106,10 @@ func TestParseVLESS(t *testing.T) {
 		},
 	}
 
-	parser := singerbox.NewParser()
+	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			out, err := parser.ParseVLESS(tt.link)
+			out, err := singerbox.ParseVLESS(tt.link)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseVLESS() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -188,10 +188,10 @@ func TestParseVMess(t *testing.T) {
 		},
 	}
 
-	parser := singerbox.NewParser()
+	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			out, err := parser.ParseVMess(tt.link)
+			out, err := singerbox.ParseVMess(tt.link)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseVMess() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -263,10 +263,10 @@ func TestParseShadowsocks(t *testing.T) {
 		},
 	}
 
-	parser := singerbox.NewParser()
+	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			out, err := parser.ParseShadowsocks(tt.link)
+			out, err := singerbox.ParseShadowsocks(tt.link)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseShadowsocks() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -335,10 +335,10 @@ func TestParseTrojan(t *testing.T) {
 		},
 	}
 
-	parser := singerbox.NewParser()
+	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			out, err := parser.ParseTrojan(tt.link)
+			out, err := singerbox.ParseTrojan(tt.link)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseTrojan() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -407,10 +407,10 @@ func TestParseSOCKS(t *testing.T) {
 		},
 	}
 
-	parser := singerbox.NewParser()
+	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			out, err := parser.ParseSOCKS(tt.link)
+			out, err := singerbox.ParseSOCKS(tt.link)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseSOCKS() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -485,10 +485,10 @@ func TestParseHTTP(t *testing.T) {
 		},
 	}
 
-	parser := singerbox.NewParser()
+	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			out, err := parser.ParseHTTP(tt.link)
+			out, err := singerbox.ParseHTTP(tt.link)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseHTTP() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -551,10 +551,10 @@ func TestParse(t *testing.T) {
 		},
 	}
 
-	parser := singerbox.NewParser()
+	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			out, err := parser.Parse(tt.link)
+			out, err := singerbox.Parse(tt.link)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -568,29 +568,29 @@ func TestParse(t *testing.T) {
 
 // Benchmark tests
 func BenchmarkParseVLESS(b *testing.B) {
-	parser := singerbox.NewParser()
+	
 	link := "vless://uuid@server:443?type=ws&security=tls&path=/ws"
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = parser.ParseVLESS(link)
+		_, _ = singerbox.ParseVLESS(link)
 	}
 }
 
 func BenchmarkParseVMess(b *testing.B) {
-	parser := singerbox.NewParser()
+	
 	config := `{"v":"2","ps":"test","add":"server","port":"443","id":"uuid","aid":"0","net":"ws","type":"none","host":"server","path":"/","tls":"tls"}`
 	link := "vmess://" + base64.StdEncoding.EncodeToString([]byte(config))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = parser.ParseVMess(link)
+		_, _ = singerbox.ParseVMess(link)
 	}
 }
 
 func BenchmarkParseShadowsocks(b *testing.B) {
-	parser := singerbox.NewParser()
+	
 	link := "ss://aes-256-gcm:password@server:8388"
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = parser.ParseShadowsocks(link)
+		_, _ = singerbox.ParseShadowsocks(link)
 	}
 }

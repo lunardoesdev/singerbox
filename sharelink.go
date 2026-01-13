@@ -13,16 +13,6 @@ import (
 	"github.com/sagernet/sing/common/json/badoption"
 )
 
-// Parser handles parsing of various proxy share link formats
-// Deprecated: Use package-level Parse function instead
-type Parser struct{}
-
-// NewParser creates a new Parser instance
-// Deprecated: Use package-level Parse function instead
-func NewParser() *Parser {
-	return &Parser{}
-}
-
 // Parse parses a share link and returns a sing-box Outbound configuration
 func Parse(link string) (option.Outbound, error) {
 	link = strings.TrimSpace(link)
@@ -42,12 +32,6 @@ func Parse(link string) (option.Outbound, error) {
 	}
 
 	return option.Outbound{}, E.New("unsupported protocol: " + strings.Split(link, "://")[0])
-}
-
-// Parse method for backwards compatibility
-// Deprecated: Use package-level Parse function instead
-func (p *Parser) Parse(link string) (option.Outbound, error) {
-	return Parse(link)
 }
 
 // ParseVLESS parses a VLESS share link
@@ -515,40 +499,3 @@ func getPort(hostPort string) int {
 	return port
 }
 
-// Backwards compatibility methods - delegate to package-level functions
-
-// ParseVLESS parses a VLESS share link
-// Deprecated: Use package-level ParseVLESS function instead
-func (p *Parser) ParseVLESS(link string) (option.Outbound, error) {
-	return ParseVLESS(link)
-}
-
-// ParseVMess parses a VMess share link
-// Deprecated: Use package-level ParseVMess function instead
-func (p *Parser) ParseVMess(link string) (option.Outbound, error) {
-	return ParseVMess(link)
-}
-
-// ParseShadowsocks parses a Shadowsocks share link
-// Deprecated: Use package-level ParseShadowsocks function instead
-func (p *Parser) ParseShadowsocks(link string) (option.Outbound, error) {
-	return ParseShadowsocks(link)
-}
-
-// ParseTrojan parses a Trojan share link
-// Deprecated: Use package-level ParseTrojan function instead
-func (p *Parser) ParseTrojan(link string) (option.Outbound, error) {
-	return ParseTrojan(link)
-}
-
-// ParseSOCKS parses a SOCKS share link
-// Deprecated: Use package-level ParseSOCKS function instead
-func (p *Parser) ParseSOCKS(link string) (option.Outbound, error) {
-	return ParseSOCKS(link)
-}
-
-// ParseHTTP parses an HTTP share link
-// Deprecated: Use package-level ParseHTTP function instead
-func (p *Parser) ParseHTTP(link string) (option.Outbound, error) {
-	return ParseHTTP(link)
-}

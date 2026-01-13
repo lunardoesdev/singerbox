@@ -160,8 +160,8 @@ func ExampleProxyBox_IsRunning() {
 // ExampleProxyBox_withSharelink demonstrates integration with sharelink parser
 func ExampleProxyBox_withSharelink() {
 	// Parse a share link
-	parser := singerbox.NewParser()
-	outbound, err := parser.Parse("socks5://127.0.0.1:1080")
+	
+	outbound, err := singerbox.Parse("socks5://127.0.0.1:1080")
 	if err != nil {
 		fmt.Printf("Parse error: %v\n", err)
 		return

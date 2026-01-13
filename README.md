@@ -244,11 +244,11 @@ if pb.IsRunning() {
 ### Custom Configuration
 
 ```go
-// Create a proxy accessible from network
+// Create a proxy accessible from network with logging
 pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
     Outbound:   outbound,
     ListenAddr: "0.0.0.0:9050",    // Listen on all interfaces
-    LogLevel:   "debug",           // Verbose logging
+    LogLevel:   "info",             // Enable informational logging (default is "panic" - silent)
 })
 
 pb.Start()
@@ -257,6 +257,30 @@ defer pb.Stop()
 fmt.Println("✓ Proxy accessible from network!")
 fmt.Println("  Other devices can connect to:")
 fmt.Printf("  Mixed (SOCKS5/HTTP): YOUR_IP:9050\n")
+```
+
+### Logging Configuration
+
+By default, the proxy operates silently (LogLevel: `"panic"`). Enable logging for debugging:
+
+```go
+// Silent operation (default)
+pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
+    Outbound: outbound,
+    // LogLevel not set - defaults to "panic" (silent)
+})
+
+// Enable info logging to see connection activity
+pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
+    Outbound: outbound,
+    LogLevel: "info",  // Shows connection info
+})
+
+// Enable debug logging for troubleshooting
+pb, _ := singerbox.NewProxyBox(singerbox.ProxyBoxConfig{
+    Outbound: outbound,
+    LogLevel: "debug",  // Shows detailed debug info
+})
 ```
 
 ## 📚 API Documentation
@@ -294,9 +318,18 @@ Creates a new proxy instance.
 type ProxyBoxConfig struct {
     Outbound   option.Outbound  // Required: sing-box outbound config
     ListenAddr string           // Optional: Mixed proxy address (default: "127.0.0.1:1080")
-    LogLevel   string           // Optional: "trace", "debug", "info", "warn", "error" (default: "info")
+    LogLevel   string           // Optional: Logging level (default: "panic" - silent)
 }
 ```
+
+**Log Levels** (from most to least verbose):
+- `"trace"` - Very detailed debugging information
+- `"debug"` - Detailed debugging information
+- `"info"` - General informational messages
+- `"warn"` - Warning messages
+- `"error"` - Error messages
+- `"fatal"` - Fatal errors (will terminate)
+- `"panic"` - Critical errors only (default - silent operation)
 
 #### Methods
 

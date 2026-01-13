@@ -31,7 +31,8 @@ type ProxyBoxConfig struct {
 	// ListenAddr is the address for SOCKS5/HTTP mixed proxy (default: "127.0.0.1:1080")
 	ListenAddr string
 
-	// LogLevel is the log level (default: "info")
+	// LogLevel sets the logging level (default: "panic" for silent operation)
+	// Available levels: "trace", "debug", "info", "warn", "error", "fatal", "panic"
 	LogLevel string
 }
 
@@ -42,7 +43,7 @@ func NewProxyBox(cfg ProxyBoxConfig) (*ProxyBox, error) {
 		cfg.ListenAddr = "127.0.0.1:1080"
 	}
 	if cfg.LogLevel == "" {
-		cfg.LogLevel = "info"
+		cfg.LogLevel = "panic" // Silent by default - only shows critical errors
 	}
 
 	// Create sing-box configuration
